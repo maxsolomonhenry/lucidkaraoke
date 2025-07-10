@@ -1,0 +1,225 @@
+# JUCE/C++ Build artifacts
+Builds/
+build/
+Build/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.pdb
+*.idb
+*.ilk
+*.exp
+*.manifest
+*.res
+*.rc
+*.aps
+*.suo
+*.user
+*.ncb
+*.opt
+*.plg
+*.positions
+*.depend
+*.layout
+*.cbp
+*.workspace
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcworkspace
+*.xcuserdata
+*.xccheckout
+*.moved-aside
+DerivedData/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Python IDEs
+.spyderproject
+.spyproject
+.ropeproject
+.pydevproject
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Python testing
+.tox/
+.coverage
+.pytest_cache/
+htmlcov/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Audio files (common in audio projects)
+*.wav
+*.mp3
+*.aif
+*.aiff
+*.flac
+*.ogg
+*.m4a
+*.wma
+*.au
+*.raw
+*.pcm
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+*.rej
+
+# Package managers
+node_modules/
+.npm
+.yarn/
+.pnp.*
+yarn-error.log
+package-lock.json
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Conan
+conanfile.txt
+conanbuildinfo.*
+conaninfo.txt
+conan.lock
+
+# Visual Studio
+*.vcxproj.user
+*.vcxproj.filters
+*.vcxproj.*.user
+*.sln.docstates
+*.sln.ide/
+.vs/
+*.VC.db
+*.VC.VC.opendb
+
+# Xcode
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+*.xcuserstate
+*.xcscmblueprint
+*.hmap
+*.ipa
+
+# Qt
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.moc
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+*.qmlc
+*.jsc
+Makefile*
+*build-*
+*.qm
+.qmake.cache
+.qmake.stash
+
+# Profiling
+*.dSYM/
+*.su
+*.idb
+*.pdb
