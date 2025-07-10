@@ -29,7 +29,15 @@ target_sources(lucidkaraoke
         Source/PluginEditor.cpp
         Source/PluginEditor.h
         Source/PluginProcessor.cpp
-        Source/PluginProcessor.h)
+        Source/PluginProcessor.h
+        Source/LookAndFeel/DarkTheme.cpp
+        Source/LookAndFeel/DarkTheme.h
+        Source/Components/WaveformDisplay.cpp
+        Source/Components/WaveformDisplay.h
+        Source/Components/TransportControls.cpp
+        Source/Components/TransportControls.h
+        Source/Components/LoadButton.cpp
+        Source/Components/LoadButton.h)
 
 target_compile_definitions(lucidkaraoke
     PUBLIC

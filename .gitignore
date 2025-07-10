@@ -2,6 +2,7 @@
 Builds/
 build/
 Build/
+.claude/
 *.o
 *.obj
 *.exe

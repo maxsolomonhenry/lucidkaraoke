@@ -13,28 +13,96 @@
 LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (LucidkaraokeAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
-    setSize (400, 300);
+    setLookAndFeel(&darkTheme);
+    
+    loadButton = std::make_unique<LoadButton>();
+    loadButton->onFileSelected = [this](const juce::File& file) {
+        loadFile(file);
+    };
+    addAndMakeVisible(loadButton.get());
+    
+    waveformDisplay = std::make_unique<WaveformDisplay>();
+    waveformDisplay->onPositionChanged = [this](double position) {
+        audioProcessor.setPosition(position);
+    };
+    addAndMakeVisible(waveformDisplay.get());
+    
+    transportControls = std::make_unique<TransportControls>();
+    transportControls->onPlayClicked = [this]() {
+        audioProcessor.play();
+    };
+    transportControls->onPauseClicked = [this]() {
+        audioProcessor.pause();
+    };
+    transportControls->onStopClicked = [this]() {
+        audioProcessor.stop();
+    };
+    addAndMakeVisible(transportControls.get());
+    
+    startTimer(50);
+    
+    setSize (800, 600);
 }
 
 LucidkaraokeAudioProcessorEditor::~LucidkaraokeAudioProcessorEditor()
 {
+    stopTimer();
+    setLookAndFeel(nullptr);
 }
 
 //==============================================================================
 void LucidkaraokeAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
-    g.setColour (juce::Colours::white);
-    g.setFont (juce::FontOptions (15.0f));
-    g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+    
+    g.setColour(juce::Colour(0xff4dabf7));
+    g.setFont(juce::FontOptions(24.0f, juce::Font::bold));
+    g.drawText("LucidKaraoke", getLocalBounds().removeFromTop(60), juce::Justification::centred);
 }
 
 void LucidkaraokeAudioProcessorEditor::resized()
 {
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
+    auto bounds = getLocalBounds();
+    
+    auto headerHeight = 60;
+    bounds.removeFromTop(headerHeight);
+    
+    auto margin = 20;
+    bounds.reduce(margin, margin);
+    
+    auto loadButtonHeight = 60;
+    loadButton->setBounds(bounds.removeFromTop(loadButtonHeight));
+    
+    bounds.removeFromTop(margin);
+    
+    auto transportHeight = 80;
+    auto transportBounds = bounds.removeFromBottom(transportHeight);
+    
+    bounds.removeFromBottom(margin);
+    
+    waveformDisplay->setBounds(bounds);
+    transportControls->setBounds(transportBounds);
+}
+
+void LucidkaraokeAudioProcessorEditor::timerCallback()
+{
+    updateWaveformPosition();
+    
+    transportControls->setPlayButtonEnabled(audioProcessor.isLoaded() && !audioProcessor.isPlaying());
+    transportControls->setPauseButtonEnabled(audioProcessor.isPlaying());
+    transportControls->setStopButtonEnabled(audioProcessor.isLoaded());
+}
+
+void LucidkaraokeAudioProcessorEditor::loadFile(const juce::File& file)
+{
+    audioProcessor.loadFile(file);
+    waveformDisplay->loadURL(juce::URL(file));
+}
+
+void LucidkaraokeAudioProcessorEditor::updateWaveformPosition()
+{
+    if (audioProcessor.isLoaded())
+    {
+        waveformDisplay->setPositionRelative(audioProcessor.getPosition());
+    }
 }

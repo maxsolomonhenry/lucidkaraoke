@@ -10,11 +10,16 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "LookAndFeel/DarkTheme.h"
+#include "Components/WaveformDisplay.h"
+#include "Components/TransportControls.h"
+#include "Components/LoadButton.h"
 
 //==============================================================================
 /**
 */
-class LucidkaraokeAudioProcessorEditor  : public juce::AudioProcessorEditor
+class LucidkaraokeAudioProcessorEditor  : public juce::AudioProcessorEditor,
+                                          public juce::Timer
 {
 public:
     LucidkaraokeAudioProcessorEditor (LucidkaraokeAudioProcessor&);
@@ -23,11 +28,21 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+    void timerCallback() override;
 
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     LucidkaraokeAudioProcessor& audioProcessor;
+    
+    DarkTheme darkTheme;
+    
+    std::unique_ptr<LoadButton> loadButton;
+    std::unique_ptr<WaveformDisplay> waveformDisplay;
+    std::unique_ptr<TransportControls> transportControls;
+    
+    void loadFile(const juce::File& file);
+    void updateWaveformPosition();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LucidkaraokeAudioProcessorEditor)
 };

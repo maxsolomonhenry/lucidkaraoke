@@ -19,13 +19,22 @@ LucidkaraokeAudioProcessor::LucidkaraokeAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ),
 #endif
+      state(Stopped)
 {
+    formatManager.registerBasicFormats();
+    transportSource.addChangeListener(this);
+    
+    mixerSource.addInputSource(&transportSource, false);
 }
 
 LucidkaraokeAudioProcessor::~LucidkaraokeAudioProcessor()
 {
+    transportSource.removeChangeListener(this);
+    mixerSource.removeAllInputs();
+    transportSource.setSource(nullptr);
+    readerSource.reset();
 }
 
 //==============================================================================
@@ -93,14 +102,14 @@ void LucidkaraokeAudioProcessor::changeProgramName (int index, const juce::Strin
 //==============================================================================
 void LucidkaraokeAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    transportSource.prepareToPlay(samplesPerBlock, sampleRate);
+    mixerSource.prepareToPlay(samplesPerBlock, sampleRate);
 }
 
 void LucidkaraokeAudioProcessor::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
+    transportSource.releaseResources();
+    mixerSource.releaseResources();
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -135,26 +144,17 @@ void LucidkaraokeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+    if (readerSource != nullptr)
     {
-        auto* channelData = buffer.getWritePointer (channel);
-
-        // ..do something to the data...
+        juce::AudioSourceChannelInfo channelInfo(&buffer, 0, buffer.getNumSamples());
+        mixerSource.getNextAudioBlock(channelInfo);
+    }
+    else
+    {
+        buffer.clear();
     }
 }
 
@@ -185,6 +185,122 @@ void LucidkaraokeAudioProcessor::setStateInformation (const void* data, int size
 
 //==============================================================================
 // This creates new instances of the plugin..
+//==============================================================================
+// Audio file handling implementation
+void LucidkaraokeAudioProcessor::loadFile(const juce::File& file)
+{
+    auto* reader = formatManager.createReaderFor(file);
+    
+    if (reader != nullptr)
+    {
+        std::unique_ptr<juce::AudioFormatReaderSource> newSource(
+            new juce::AudioFormatReaderSource(reader, true)
+        );
+        
+        transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);
+        readerSource = std::move(newSource);
+        lastFileURL = juce::URL(file);
+        
+        changeState(Stopped);
+    }
+}
+
+void LucidkaraokeAudioProcessor::play()
+{
+    if (readerSource != nullptr)
+    {
+        changeState(Playing);
+    }
+}
+
+void LucidkaraokeAudioProcessor::pause()
+{
+    if (state == Playing)
+    {
+        changeState(Paused);
+    }
+}
+
+void LucidkaraokeAudioProcessor::stop()
+{
+    if (state == Playing || state == Paused)
+    {
+        changeState(Stopped);
+    }
+}
+
+void LucidkaraokeAudioProcessor::setPosition(double position)
+{
+    if (readerSource != nullptr)
+    {
+        auto lengthInSamples = readerSource->getTotalLength();
+        auto samplePosition = static_cast<juce::int64>(position * lengthInSamples);
+        transportSource.setPosition(samplePosition);
+    }
+}
+
+double LucidkaraokeAudioProcessor::getPosition() const
+{
+    if (readerSource != nullptr)
+    {
+        auto lengthInSamples = readerSource->getTotalLength();
+        if (lengthInSamples > 0)
+            return transportSource.getCurrentPosition() / static_cast<double>(lengthInSamples);
+    }
+    return 0.0;
+}
+
+double LucidkaraokeAudioProcessor::getLength() const
+{
+    if (readerSource != nullptr)
+        return readerSource->getTotalLength();
+    return 0.0;
+}
+
+bool LucidkaraokeAudioProcessor::isPlaying() const
+{
+    return state == Playing;
+}
+
+bool LucidkaraokeAudioProcessor::isLoaded() const
+{
+    return readerSource != nullptr;
+}
+
+void LucidkaraokeAudioProcessor::changeListenerCallback(juce::ChangeBroadcaster* source)
+{
+    if (source == &transportSource)
+    {
+        if (transportSource.isPlaying())
+            changeState(Playing);
+        else
+            changeState(Stopped);
+    }
+}
+
+void LucidkaraokeAudioProcessor::changeState(TransportState newState)
+{
+    if (state != newState)
+    {
+        state = newState;
+        
+        switch (state)
+        {
+            case Stopped:
+                transportSource.setPosition(0.0);
+                [[fallthrough]];
+            case Paused:
+                transportSource.stop();
+                break;
+                
+            case Playing:
+                transportSource.start();
+                break;
+        }
+    }
+}
+
+//==============================================================================
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new LucidkaraokeAudioProcessor();

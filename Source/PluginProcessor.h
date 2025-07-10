@@ -13,7 +13,8 @@
 //==============================================================================
 /**
 */
-class LucidkaraokeAudioProcessor  : public juce::AudioProcessor
+class LucidkaraokeAudioProcessor  : public juce::AudioProcessor,
+                                   public juce::ChangeListener
 {
 public:
     //==============================================================================
@@ -52,8 +53,41 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+    
+    //==============================================================================
+    // Audio file handling
+    void loadFile(const juce::File& file);
+    void play();
+    void pause();
+    void stop();
+    void setPosition(double position);
+    double getPosition() const;
+    double getLength() const;
+    bool isPlaying() const;
+    bool isLoaded() const;
+    
+    void changeListenerCallback(juce::ChangeBroadcaster* source) override;
+    
+    juce::URL getLastFileURL() const { return lastFileURL; }
 
 private:
     //==============================================================================
+    juce::AudioFormatManager formatManager;
+    std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
+    juce::AudioTransportSource transportSource;
+    juce::MixerAudioSource mixerSource;
+    
+    enum TransportState
+    {
+        Stopped,
+        Playing,
+        Paused
+    };
+    
+    TransportState state;
+    juce::URL lastFileURL;
+    
+    void changeState(TransportState newState);
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LucidkaraokeAudioProcessor)
 };
