@@ -131,22 +131,23 @@ void LucidkaraokeAudioProcessorEditor::splitAudioStems(const juce::File& inputFi
     if (!inputFile.existsAsFile())
         return;
     
-    // Create output directory in the same location as the input file
-    auto outputDir = inputFile.getParentDirectory().getChildFile(inputFile.getFileNameWithoutExtension() + "_stems");
+    // Create unique temp directory for this processing session
+    auto tempDir = juce::File::getSpecialLocation(juce::File::tempDirectory)
+                       .getChildFile("lucidkaraoke_stems_" + juce::String(juce::Random::getSystemRandom().nextInt64()));
     
     splitButton->setProcessing(true);
     
     // Create and start the stem processor
-    auto* processor = new StemProcessor(inputFile, outputDir);
-    processor->onProcessingComplete = [this, outputDir](bool success, const juce::String& message) {
-        juce::MessageManager::callAsync([this, success, message, outputDir]() {
+    auto* processor = new StemProcessor(inputFile, tempDir);
+    processor->onProcessingComplete = [this, tempDir](bool success, const juce::String& message) {
+        juce::MessageManager::callAsync([this, success, message, tempDir]() {
             splitButton->setProcessing(false);
             
             juce::String displayMessage = message;
             if (success)
             {
-                displayMessage += "\n\nStems saved to:\n" + outputDir.getFullPathName();
-                displayMessage += "\n\nLook for the 'htdemucs_ft' subfolder containing your separated stems.";
+                displayMessage += "\n\nStems processed successfully in background.";
+                displayMessage += "\n\nTemp location: " + tempDir.getFullPathName();
             }
             
             juce::AlertWindow::showMessageBoxAsync(
