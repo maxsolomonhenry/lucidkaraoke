@@ -346,14 +346,25 @@ void LucidkaraokeAudioProcessor::changeState(TransportState newState)
             case Stopped:
                 transportSource.setPosition(0.0);
                 transportSource.stop();
+                // Recording should be fully stopped via stop() method, not here
                 break;
                 
             case Paused:
                 transportSource.stop();
+                // Pause recording (keep connection alive but stop writing)
+                if (isRecording())
+                {
+                    recordingPaused = true;
+                }
                 break;
                 
             case Playing:
                 transportSource.start();
+                // Resume recording if it was paused
+                if (isRecording())
+                {
+                    recordingPaused = false;
+                }
                 break;
         }
     }
@@ -397,6 +408,9 @@ void LucidkaraokeAudioProcessor::startRecording()
             const juce::ScopedLock sl(writerLock);
             activeWriter = threadedWriter.get();
             
+            // Reset recording pause state when starting new recording
+            recordingPaused = false;
+            
             // Notify UI that recording has started
             sendChangeMessage();
         }
@@ -417,6 +431,9 @@ void LucidkaraokeAudioProcessor::stopRecording()
     threadedWriter.reset();
 
     recordingDeviceManager.removeAudioCallback(recordingCallback.get());
+    
+    // Reset recording pause state when fully stopping
+    recordingPaused = false;
     
     // Notify UI that recording has stopped
     sendChangeMessage();
@@ -440,7 +457,8 @@ void LucidkaraokeAudioProcessor::RecordingCallback::audioDeviceIOCallbackWithCon
 
     const juce::ScopedLock sl(owner.writerLock);
 
-    if (owner.activeWriter.load() != nullptr && numInputChannels > 0 && inputChannelData[0] != nullptr)
+    if (owner.activeWriter.load() != nullptr && !owner.recordingPaused && 
+        numInputChannels > 0 && inputChannelData[0] != nullptr)
     {
         owner.activeWriter.load()->write(inputChannelData, numSamples);
     }

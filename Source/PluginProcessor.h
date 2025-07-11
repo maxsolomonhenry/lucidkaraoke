@@ -139,5 +139,8 @@ private:
     bool completeRecordingSession = false;
     double recordingStartPosition = 0.0;
     
+    // Track recording pause state for transport synchronization
+    bool recordingPaused = false;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LucidkaraokeAudioProcessor)
 };
