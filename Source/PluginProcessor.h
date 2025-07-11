@@ -70,6 +70,33 @@ public:
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
     
     juce::URL getLastFileURL() const { return lastFileURL; }
+    
+    //==============================================================================
+    // Recording functionality
+    void startRecording();
+    void stopRecording();
+    bool isRecording() const;
+
+private:
+    class RecordingCallback : public juce::AudioIODeviceCallback
+    {
+    public:
+        RecordingCallback(LucidkaraokeAudioProcessor& processor) : owner(processor) {}
+        
+        void audioDeviceIOCallbackWithContext(const float* const* inputChannelData,
+                                           int numInputChannels,
+                                           float* const* outputChannelData,
+                                           int numOutputChannels,
+                                           int numSamples, const juce::AudioIODeviceCallbackContext& context) override;
+        
+        void audioDeviceAboutToStart(juce::AudioIODevice* device) override {}
+        void audioDeviceStopped() override {}
+        
+    private:
+        LucidkaraokeAudioProcessor& owner;
+    };
+    
+    friend class RecordingCallback;
 
 private:
     //==============================================================================
@@ -89,6 +116,21 @@ private:
     juce::URL lastFileURL;
     
     void changeState(TransportState newState);
+    
+    //==============================================================================
+    // Recording members
+    std::unique_ptr<juce::AudioFormatWriter> writer;
+    juce::File recordingFile;
+    
+    // Independent audio device for recording
+    juce::AudioDeviceManager recordingDeviceManager;
+    std::unique_ptr<juce::AudioIODeviceCallback> recordingCallback;
+
+    // For threaded recording
+    juce::TimeSliceThread backgroundThread { "Audio Recorder Thread" };
+    std::unique_ptr<juce::AudioFormatWriter::ThreadedWriter> threadedWriter;
+    juce::CriticalSection writerLock;
+    std::atomic<juce::AudioFormatWriter::ThreadedWriter*> activeWriter { nullptr };
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LucidkaraokeAudioProcessor)
 };

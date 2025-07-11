@@ -5,6 +5,7 @@ TransportControls::TransportControls()
     playButton = std::make_unique<juce::TextButton>("Play");
     pauseButton = std::make_unique<juce::TextButton>("Pause");
     stopButton = std::make_unique<juce::TextButton>("Stop");
+    recordButton = std::make_unique<RecordButton>();
     
     playButton->onClick = [this]() { 
         if (onPlayClicked) onPlayClicked(); 
@@ -18,9 +19,14 @@ TransportControls::TransportControls()
         if (onStopClicked) onStopClicked(); 
     };
     
+    recordButton->onRecordStateChanged = [this](bool recording) {
+        if (onRecordStateChanged) onRecordStateChanged(recording);
+    };
+    
     addAndMakeVisible(playButton.get());
     addAndMakeVisible(pauseButton.get());
     addAndMakeVisible(stopButton.get());
+    addAndMakeVisible(recordButton.get());
 }
 
 TransportControls::~TransportControls()
@@ -50,13 +56,15 @@ void TransportControls::resized()
     auto buttonHeight = 40;
     auto spacing = 10;
     
-    auto totalWidth = (buttonWidth * 3) + (spacing * 2);
+    // Now we have 4 buttons (including record)
+    auto totalWidth = (buttonWidth * 4) + (spacing * 3);
     auto startX = (bounds.getWidth() - totalWidth) / 2;
     auto startY = (bounds.getHeight() - buttonHeight) / 2;
     
     playButton->setBounds(startX, startY, buttonWidth, buttonHeight);
     pauseButton->setBounds(startX + buttonWidth + spacing, startY, buttonWidth, buttonHeight);
     stopButton->setBounds(startX + (buttonWidth + spacing) * 2, startY, buttonWidth, buttonHeight);
+    recordButton->setBounds(startX + (buttonWidth + spacing) * 3, startY, buttonWidth, buttonHeight);
 }
 
 void TransportControls::setPlayButtonEnabled(bool enabled)
@@ -72,6 +80,11 @@ void TransportControls::setPauseButtonEnabled(bool enabled)
 void TransportControls::setStopButtonEnabled(bool enabled)
 {
     stopButton->setEnabled(enabled);
+}
+
+void TransportControls::setRecordingState(bool recording)
+{
+    recordButton->setRecording(recording);
 }
 
 void TransportControls::drawPlayIcon(juce::Graphics& g, juce::Rectangle<int> bounds)

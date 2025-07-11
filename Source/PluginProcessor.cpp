@@ -25,12 +25,30 @@ LucidkaraokeAudioProcessor::LucidkaraokeAudioProcessor()
 {
     formatManager.registerBasicFormats();
     transportSource.addChangeListener(this);
-    
+
     mixerSource.addInputSource(&transportSource, false);
+    backgroundThread.startThread();
+
+    // Initialize recording device manager
+    recordingDeviceManager.initialiseWithDefaultDevices(1, 0); // 1 input, 0 outputs
+
+    juce::AudioDeviceManager::AudioDeviceSetup setup;
+    recordingDeviceManager.getAudioDeviceSetup(setup);
+
+    if (setup.inputDeviceName.isNotEmpty())
+    {
+        setup.inputChannels.setBit(0);
+        recordingDeviceManager.setAudioDeviceSetup(setup, true);
+    }
+
+    recordingCallback = std::make_unique<RecordingCallback>(*this);
 }
 
 LucidkaraokeAudioProcessor::~LucidkaraokeAudioProcessor()
 {
+    stopRecording();
+    recordingDeviceManager.removeAudioCallback(recordingCallback.get());
+    backgroundThread.stopThread(5000);
     transportSource.removeChangeListener(this);
     mixerSource.removeAllInputs();
     transportSource.setSource(nullptr);
@@ -304,6 +322,94 @@ void LucidkaraokeAudioProcessor::changeState(TransportState newState)
                 transportSource.start();
                 break;
         }
+    }
+}
+
+//==============================================================================
+// Recording functionality
+void LucidkaraokeAudioProcessor::startRecording()
+{
+    stopRecording(); // Stop any existing recording
+
+    // Create a unique filename in temp directory
+    auto tempDir = juce::File::getSpecialLocation(juce::File::tempDirectory);
+    auto timestamp = juce::Time::getCurrentTime().formatted("%Y%m%d_%H%M%S");
+    recordingFile = tempDir.getChildFile("LucidKaraoke_Recording_" + timestamp + ".wav");
+
+    // Create WAV writer for mono recording
+    juce::WavAudioFormat wavFormat;
+    std::unique_ptr<juce::FileOutputStream> fileStream(recordingFile.createOutputStream());
+
+    if (fileStream != nullptr)
+    {
+        auto* currentDevice = recordingDeviceManager.getCurrentAudioDevice();
+        auto sampleRate = currentDevice ? currentDevice->getCurrentSampleRate() : 44100.0;
+        auto bitDepth = 16;
+
+        if (auto writer = wavFormat.createWriterFor(fileStream.release(),
+                                                    sampleRate,
+                                                    1, // Mono
+                                                    bitDepth,
+                                                    {},
+                                                    0))
+        {
+            // Passes responsibility for deleting the stream to the writer object
+            threadedWriter.reset(new juce::AudioFormatWriter::ThreadedWriter(writer, backgroundThread, 32768));
+
+            // Start the audio device callback *before* setting the flag
+            recordingDeviceManager.addAudioCallback(recordingCallback.get());
+
+            // Now, swap over our active writer pointer so that the audio callback will start using it..
+            const juce::ScopedLock sl(writerLock);
+            activeWriter = threadedWriter.get();
+        }
+    }
+}
+
+void LucidkaraokeAudioProcessor::stopRecording()
+{
+    // First, clear this pointer to stop the audio callback from using our writer object..
+    { 
+        const juce::ScopedLock sl(writerLock);
+        activeWriter = nullptr;
+    }
+
+    // Now we can delete the writer object. It's done in this order because the deletion could
+    // take a little time while remaining data gets flushed to disk, so it's best to avoid blocking
+    // the audio callback while this happens.
+    threadedWriter.reset();
+
+    recordingDeviceManager.removeAudioCallback(recordingCallback.get());
+}
+
+bool LucidkaraokeAudioProcessor::isRecording() const
+{
+    return activeWriter.load() != nullptr;
+}
+
+//==============================================================================
+// RecordingCallback implementation
+void LucidkaraokeAudioProcessor::RecordingCallback::audioDeviceIOCallbackWithContext(
+    const float* const* inputChannelData,
+    int numInputChannels,
+    float* const* outputChannelData,
+    int numOutputChannels,
+    int numSamples, const juce::AudioIODeviceCallbackContext& context)
+{
+    juce::ignoreUnused(context);
+
+    const juce::ScopedLock sl(owner.writerLock);
+
+    if (owner.activeWriter.load() != nullptr && numInputChannels > 0 && inputChannelData[0] != nullptr)
+    {
+        owner.activeWriter.load()->write(inputChannelData, numSamples);
+    }
+
+    // Clear output buffers (we don't want to output anything)
+    for (int i = 0; i < numOutputChannels; ++i)
+    {
+        if (outputChannelData[i] != nullptr)
+            juce::FloatVectorOperations::clear(outputChannelData[i], numSamples);
     }
 }
 

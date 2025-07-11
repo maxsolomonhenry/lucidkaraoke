@@ -22,7 +22,10 @@ juce_add_plugin(lucidkaraoke
     FORMATS AU VST3 Standalone
     PRODUCT_NAME "LucidKaraoke"
     HARDENED_RUNTIME_ENABLED FALSE
-    APP_SANDBOX_ENABLED FALSE)
+    APP_SANDBOX_ENABLED FALSE
+    MICROPHONE_PERMISSION_ENABLED TRUE
+    MICROPHONE_PERMISSION_TEXT "LucidKaraoke needs microphone access to record your vocals for karaoke sessions."
+    PLIST_TO_MERGE "${CMAKE_SOURCE_DIR}/Info.plist")
 
 juce_generate_juce_header(lucidkaraoke)
 
@@ -44,6 +47,8 @@ target_sources(lucidkaraoke
         Source/Components/SplitButton.h
         Source/Components/ProgressBar.cpp
         Source/Components/ProgressBar.h
+        Source/Components/RecordButton.cpp
+        Source/Components/RecordButton.h
         Source/Audio/StemProcessor.cpp
         Source/Audio/StemProcessor.h)
 

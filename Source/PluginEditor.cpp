@@ -14,20 +14,20 @@ LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (Lucidkaraoke
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
     setLookAndFeel(&darkTheme);
-    
+
     loadButton = std::make_unique<LoadButton>();
     loadButton->onFileSelected = [this](const juce::File& file) {
         loadFile(file);
     };
     addAndMakeVisible(loadButton.get());
-    
-    
+
+
     waveformDisplay = std::make_unique<WaveformDisplay>();
     waveformDisplay->onPositionChanged = [this](double position) {
         audioProcessor.setPosition(position);
     };
     addAndMakeVisible(waveformDisplay.get());
-    
+
     transportControls = std::make_unique<TransportControls>();
     transportControls->onPlayClicked = [this]() {
         audioProcessor.play();
@@ -38,13 +38,20 @@ LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (Lucidkaraoke
     transportControls->onStopClicked = [this]() {
         audioProcessor.stop();
     };
+    transportControls->onRecordStateChanged = [this](bool recording) {
+        if (recording) {
+            audioProcessor.startRecording();
+        } else {
+            audioProcessor.stopRecording();
+        }
+    };
     addAndMakeVisible(transportControls.get());
-    
+
     progressBar = std::make_unique<StemProgressBar>();
     addAndMakeVisible(progressBar.get());
-    
+
     startTimer(50);
-    
+
     setSize (800, 600);
 }
 
