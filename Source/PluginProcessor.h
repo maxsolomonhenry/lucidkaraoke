@@ -77,6 +77,8 @@ public:
     void startRecording();
     void stopRecording();
     bool isRecording() const;
+    bool isCompleteRecording() const { return completeRecordingSession; }
+    juce::File getLastRecordingFile() const { return recordingFile; }
 
 private:
     class RecordingCallback : public juce::AudioIODeviceCallback
@@ -132,6 +134,10 @@ private:
     std::unique_ptr<juce::AudioFormatWriter::ThreadedWriter> threadedWriter;
     juce::CriticalSection writerLock;
     std::atomic<juce::AudioFormatWriter::ThreadedWriter*> activeWriter { nullptr };
+    
+    // Track complete recording sessions (from start to finish)
+    bool completeRecordingSession = false;
+    double recordingStartPosition = 0.0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LucidkaraokeAudioProcessor)
 };

@@ -121,6 +121,12 @@ void LucidkaraokeAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadc
     {
         // Update the recording button state to reflect the current recording state
         transportControls->setRecordingState(audioProcessor.isRecording());
+        
+        // Check if we have a complete recording that needs vocal mixing
+        if (!audioProcessor.isRecording() && audioProcessor.isCompleteRecording())
+        {
+            handleCompleteRecording();
+        }
     }
 }
 
@@ -128,6 +134,9 @@ void LucidkaraokeAudioProcessorEditor::loadFile(const juce::File& file)
 {
     audioProcessor.loadFile(file);
     waveformDisplay->loadURL(juce::URL(file));
+    
+    // Track current input file for vocal mixing later
+    currentInputFile = file;
     
     // Magic: automatically start stem processing in background
     progressBar->reset();
@@ -151,6 +160,8 @@ void LucidkaraokeAudioProcessorEditor::splitAudioStems(const juce::File& inputFi
     auto tempDir = juce::File::getSpecialLocation(juce::File::tempDirectory)
                        .getChildFile("lucidkaraoke_stems_" + juce::String(juce::Random::getSystemRandom().nextInt64()));
     
+    // Track stem output directory for vocal mixing later
+    currentStemOutputDir = tempDir;
     
     // Create and start the stem processor
     auto* processor = new StemProcessor(inputFile, tempDir);
@@ -167,8 +178,13 @@ void LucidkaraokeAudioProcessorEditor::splitAudioStems(const juce::File& inputFi
             if (success)
             {
                 progressBar->setComplete(true);
-                // Magic is ready! No blocking dialog needed
-                // TODO: This is where the magic happens at the end of the song
+                
+                // Check if we have a completed recording waiting for the karaoke track
+                if (!audioProcessor.isRecording() && audioProcessor.isCompleteRecording())
+                {
+                    // Recording is complete and karaoke track is now ready - start mixing
+                    handleCompleteRecording();
+                }
             }
             else
             {
@@ -184,4 +200,98 @@ void LucidkaraokeAudioProcessorEditor::splitAudioStems(const juce::File& inputFi
     };
     
     processor->startThread();
+}
+
+void LucidkaraokeAudioProcessorEditor::handleCompleteRecording()
+{
+    // Get the recording file from the processor
+    juce::File recordingFile = audioProcessor.getLastRecordingFile();
+    
+    if (!recordingFile.exists())
+    {
+        juce::AlertWindow::showMessageBoxAsync(
+            juce::AlertWindow::InfoIcon,
+            "Recording Complete",
+            "Your recording is complete, but the recording file could not be found.\n"
+            "Please check that the recording was saved properly."
+        );
+        return;
+    }
+    
+    // Build the expected karaoke file path
+    juce::String inputFileName = currentInputFile.getFileNameWithoutExtension();
+    juce::File karaokeFile = currentStemOutputDir.getChildFile("htdemucs_ft")
+                                                  .getChildFile(inputFileName)
+                                                  .getChildFile("karaoke.mp3");
+    
+    if (!karaokeFile.exists())
+    {
+        juce::AlertWindow::showMessageBoxAsync(
+            juce::AlertWindow::InfoIcon,
+            "Recording Complete",
+            "Your recording is complete!\n\n"
+            "However, the karaoke track is not ready yet. Please wait for stem processing to complete, "
+            "then your vocals will be automatically mixed with the karaoke track."
+        );
+        return;
+    }
+    
+    // Both files exist - start vocal mixing
+    mixVocalsWithKaraoke(recordingFile, karaokeFile);
+}
+
+void LucidkaraokeAudioProcessorEditor::mixVocalsWithKaraoke(const juce::File& recordingFile, const juce::File& karaokeFile)
+{
+    // Create output filename
+    juce::String timestamp = juce::Time::getCurrentTime().formatted("%Y%m%d_%H%M%S");
+    juce::String outputFileName = currentInputFile.getFileNameWithoutExtension() + 
+                                  "_with_vocals_" + timestamp + ".mp3";
+    juce::File outputFile = karaokeFile.getParentDirectory().getChildFile(outputFileName);
+    
+    // Create vocal mixer
+    auto* mixer = new VocalMixer(recordingFile, karaokeFile, outputFile);
+    
+    // Wire up progress updates to the progress bar
+    mixer->onProgressUpdate = [this](double progress, const juce::String& statusMessage) {
+        progressBar->setProgress(progress);
+        // Optional: could show status message somewhere in UI
+    };
+    
+    mixer->onMixingComplete = [this, outputFile](bool success, const juce::String& message) {
+        juce::MessageManager::callAsync([this, success, message, outputFile]() {
+            if (success)
+            {
+                progressBar->setComplete(true);
+                
+                // Show success message with option to reveal file
+                juce::AlertWindow::showOkCancelBox(
+                    juce::AlertWindow::InfoIcon,
+                    "Vocal Mixing Complete!",
+                    message + "\n\nWould you like to reveal the file in Finder?",
+                    "Reveal File",
+                    "OK",
+                    nullptr,
+                    juce::ModalCallbackFunction::create([outputFile](int result) {
+                        if (result == 1) // User clicked "Reveal File"
+                        {
+                            outputFile.revealToUser();
+                        }
+                    })
+                );
+            }
+            else
+            {
+                progressBar->reset();
+                juce::AlertWindow::showMessageBoxAsync(
+                    juce::AlertWindow::WarningIcon,
+                    "Vocal Mixing Failed",
+                    message
+                );
+            }
+        });
+    };
+    
+    // Reset progress bar and start mixing
+    progressBar->reset();
+    mixer->startThread();
 }

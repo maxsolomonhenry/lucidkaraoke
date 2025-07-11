@@ -232,6 +232,10 @@ void LucidkaraokeAudioProcessor::play()
         // Start recording automatically when playback starts
         if (!isRecording())
         {
+            // Track if this is a complete recording session (starting from beginning)
+            recordingStartPosition = getPosition();
+            completeRecordingSession = (recordingStartPosition <= 0.01); // Allow small tolerance for start position
+            
             startRecording();
         }
     }
@@ -259,6 +263,8 @@ void LucidkaraokeAudioProcessor::stop()
         if (isRecording())
         {
             stopRecording();
+            // Manual stop - not a complete recording session
+            completeRecordingSession = false;
         }
     }
 }
@@ -318,6 +324,12 @@ void LucidkaraokeAudioProcessor::changeListenerCallback(juce::ChangeBroadcaster*
             if (isRecording())
             {
                 stopRecording();
+                
+                // If this was a complete recording session, trigger vocal mixing
+                if (completeRecordingSession)
+                {
+                    sendChangeMessage(); // Notify UI about complete recording
+                }
             }
         }
     }

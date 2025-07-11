@@ -16,6 +16,7 @@
 #include "Components/LoadButton.h"
 #include "Components/ProgressBar.h"
 #include "Audio/StemProcessor.h"
+#include "Audio/VocalMixer.h"
 
 //==============================================================================
 /**
@@ -49,6 +50,12 @@ private:
     void loadFile(const juce::File& file);
     void updateWaveformPosition();
     void splitAudioStems(const juce::File& inputFile);
+    void handleCompleteRecording();
+    void mixVocalsWithKaraoke(const juce::File& recordingFile, const juce::File& karaokeFile);
+    
+    // Track stem processing for vocal mixing
+    juce::File currentStemOutputDir;
+    juce::File currentInputFile;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LucidkaraokeAudioProcessorEditor)
 };

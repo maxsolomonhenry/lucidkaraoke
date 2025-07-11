@@ -50,7 +50,9 @@ target_sources(lucidkaraoke
         Source/Components/RecordButton.cpp
         Source/Components/RecordButton.h
         Source/Audio/StemProcessor.cpp
-        Source/Audio/StemProcessor.h)
+        Source/Audio/StemProcessor.h
+        Source/Audio/VocalMixer.cpp
+        Source/Audio/VocalMixer.h)
 
 target_compile_definitions(lucidkaraoke
     PUBLIC
