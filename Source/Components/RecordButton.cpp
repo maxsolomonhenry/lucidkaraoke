@@ -67,13 +67,9 @@ void RecordButton::timerCallback()
 
 void RecordButton::mouseDown(const juce::MouseEvent& event)
 {
-    if (event.mods.isLeftButtonDown())
-    {
-        setRecording(!isCurrentlyRecording);
-        
-        if (onRecordStateChanged)
-            onRecordStateChanged(isCurrentlyRecording);
-    }
+    // Recording is now controlled automatically by playback transport
+    // Manual recording control is disabled
+    juce::ignoreUnused(event);
 }
 
 void RecordButton::setRecording(bool recording)

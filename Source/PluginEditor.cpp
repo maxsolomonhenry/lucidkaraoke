@@ -38,13 +38,8 @@ LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (Lucidkaraoke
     transportControls->onStopClicked = [this]() {
         audioProcessor.stop();
     };
-    transportControls->onRecordStateChanged = [this](bool recording) {
-        if (recording) {
-            audioProcessor.startRecording();
-        } else {
-            audioProcessor.stopRecording();
-        }
-    };
+    // Recording is now automatic with playback - no manual control needed
+    transportControls->onRecordStateChanged = nullptr;
     addAndMakeVisible(transportControls.get());
 
     progressBar = std::make_unique<StemProgressBar>();
@@ -53,10 +48,14 @@ LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (Lucidkaraoke
     startTimer(50);
 
     setSize (800, 600);
+    
+    // Listen for recording state changes from the processor
+    audioProcessor.addChangeListener(this);
 }
 
 LucidkaraokeAudioProcessorEditor::~LucidkaraokeAudioProcessorEditor()
 {
+    audioProcessor.removeChangeListener(this);
     stopTimer();
     setLookAndFeel(nullptr);
 }
@@ -114,6 +113,15 @@ void LucidkaraokeAudioProcessorEditor::timerCallback()
     transportControls->setPauseButtonEnabled(hasFile && (isPlaying || isPaused));
     transportControls->setStopButtonEnabled(hasFile && (isPlaying || isPaused));
     
+}
+
+void LucidkaraokeAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcaster* source)
+{
+    if (source == &audioProcessor)
+    {
+        // Update the recording button state to reflect the current recording state
+        transportControls->setRecordingState(audioProcessor.isRecording());
+    }
 }
 
 void LucidkaraokeAudioProcessorEditor::loadFile(const juce::File& file)

@@ -228,6 +228,12 @@ void LucidkaraokeAudioProcessor::play()
     if (readerSource != nullptr && (state == Stopped || state == Paused))
     {
         changeState(Playing);
+        
+        // Start recording automatically when playback starts
+        if (!isRecording())
+        {
+            startRecording();
+        }
     }
 }
 
@@ -248,6 +254,12 @@ void LucidkaraokeAudioProcessor::stop()
     if (state == Playing || state == Paused)
     {
         changeState(Stopped);
+        
+        // Stop and save recording when transport stops
+        if (isRecording())
+        {
+            stopRecording();
+        }
     }
 }
 
@@ -296,9 +308,19 @@ bool LucidkaraokeAudioProcessor::isLoaded() const
 
 void LucidkaraokeAudioProcessor::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
-    // We manually control the state through our transport methods
-    // so we don't need to automatically change state based on transport source
-    juce::ignoreUnused(source);
+    if (source == &transportSource)
+    {
+        // Check if transport source has stopped (reached end of file)
+        if (transportSource.hasStreamFinished() && state == Playing)
+        {
+            // File has reached the end - stop recording and playback
+            changeState(Stopped);
+            if (isRecording())
+            {
+                stopRecording();
+            }
+        }
+    }
 }
 
 void LucidkaraokeAudioProcessor::changeState(TransportState newState)
@@ -362,6 +384,9 @@ void LucidkaraokeAudioProcessor::startRecording()
             // Now, swap over our active writer pointer so that the audio callback will start using it..
             const juce::ScopedLock sl(writerLock);
             activeWriter = threadedWriter.get();
+            
+            // Notify UI that recording has started
+            sendChangeMessage();
         }
     }
 }
@@ -380,6 +405,9 @@ void LucidkaraokeAudioProcessor::stopRecording()
     threadedWriter.reset();
 
     recordingDeviceManager.removeAudioCallback(recordingCallback.get());
+    
+    // Notify UI that recording has stopped
+    sendChangeMessage();
 }
 
 bool LucidkaraokeAudioProcessor::isRecording() const

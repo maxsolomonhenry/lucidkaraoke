@@ -14,7 +14,8 @@
 /**
 */
 class LucidkaraokeAudioProcessor  : public juce::AudioProcessor,
-                                   public juce::ChangeListener
+                                   public juce::ChangeListener,
+                                   public juce::ChangeBroadcaster
 {
 public:
     //==============================================================================

@@ -21,7 +21,8 @@
 /**
 */
 class LucidkaraokeAudioProcessorEditor  : public juce::AudioProcessorEditor,
-                                          public juce::Timer
+                                          public juce::Timer,
+                                          public juce::ChangeListener
 {
 public:
     LucidkaraokeAudioProcessorEditor (LucidkaraokeAudioProcessor&);
@@ -31,6 +32,7 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     void timerCallback() override;
+    void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 
 private:
     // This reference is provided as a quick way for your editor to
