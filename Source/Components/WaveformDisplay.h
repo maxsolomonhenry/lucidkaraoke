@@ -13,6 +13,8 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
     void mouseDown(const juce::MouseEvent& event) override;
+    void mouseDrag(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& event) override;
     
     void loadURL(const juce::URL& url);
     void setPositionRelative(double position);
@@ -28,6 +30,7 @@ private:
     juce::AudioThumbnail audioThumbnail;
     bool fileLoaded;
     double position;
+    bool isDragging;
     
     void paintIfNoFileLoaded(juce::Graphics& g);
     void paintIfFileLoaded(juce::Graphics& g);

@@ -5,7 +5,8 @@ WaveformDisplay::WaveformDisplay()
     : thumbnailCache(10),
       audioThumbnail(1000, formatManager, thumbnailCache),
       fileLoaded(false),
-      position(0.0)
+      position(0.0),
+      isDragging(false)
 {
     formatManager.registerBasicFormats();
     audioThumbnail.addChangeListener(this);
@@ -47,7 +48,8 @@ void WaveformDisplay::mouseDown(const juce::MouseEvent& event)
 {
     if (fileLoaded && audioThumbnail.getTotalLength() > 0.0)
     {
-        auto clickPosition = event.position.x / getWidth();
+        isDragging = true;
+        auto clickPosition = juce::jlimit(0.0, 1.0, static_cast<double>(event.position.x) / getWidth());
         position = clickPosition;
         
         if (onPositionChanged)
@@ -55,6 +57,25 @@ void WaveformDisplay::mouseDown(const juce::MouseEvent& event)
             
         repaint();
     }
+}
+
+void WaveformDisplay::mouseDrag(const juce::MouseEvent& event)
+{
+    if (isDragging && fileLoaded && audioThumbnail.getTotalLength() > 0.0)
+    {
+        auto dragPosition = juce::jlimit(0.0, 1.0, static_cast<double>(event.position.x) / getWidth());
+        position = dragPosition;
+        
+        if (onPositionChanged)
+            onPositionChanged(position);
+            
+        repaint();
+    }
+}
+
+void WaveformDisplay::mouseUp(const juce::MouseEvent& /*event*/)
+{
+    isDragging = false;
 }
 
 void WaveformDisplay::loadURL(const juce::URL& url)
@@ -79,7 +100,7 @@ void WaveformDisplay::loadURL(const juce::URL& url)
 
 void WaveformDisplay::setPositionRelative(double newPosition)
 {
-    if (std::abs(position - newPosition) > 0.001)
+    if (!isDragging && std::abs(position - newPosition) > 0.001)
     {
         position = newPosition;
         repaint();

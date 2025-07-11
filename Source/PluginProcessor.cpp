@@ -207,7 +207,7 @@ void LucidkaraokeAudioProcessor::loadFile(const juce::File& file)
 
 void LucidkaraokeAudioProcessor::play()
 {
-    if (readerSource != nullptr)
+    if (readerSource != nullptr && (state == Stopped || state == Paused))
     {
         changeState(Playing);
     }
@@ -218,6 +218,10 @@ void LucidkaraokeAudioProcessor::pause()
     if (state == Playing)
     {
         changeState(Paused);
+    }
+    else if (state == Paused)
+    {
+        changeState(Playing);
     }
 }
 
@@ -233,9 +237,9 @@ void LucidkaraokeAudioProcessor::setPosition(double position)
 {
     if (readerSource != nullptr)
     {
-        auto lengthInSamples = readerSource->getTotalLength();
-        auto samplePosition = static_cast<juce::int64>(position * lengthInSamples);
-        transportSource.setPosition(samplePosition);
+        auto lengthInSeconds = readerSource->getTotalLength() / readerSource->getAudioFormatReader()->sampleRate;
+        auto timePosition = position * lengthInSeconds;
+        transportSource.setPosition(timePosition);
     }
 }
 
@@ -243,9 +247,9 @@ double LucidkaraokeAudioProcessor::getPosition() const
 {
     if (readerSource != nullptr)
     {
-        auto lengthInSamples = readerSource->getTotalLength();
-        if (lengthInSamples > 0)
-            return transportSource.getCurrentPosition() / static_cast<double>(lengthInSamples);
+        auto lengthInSeconds = readerSource->getTotalLength() / readerSource->getAudioFormatReader()->sampleRate;
+        if (lengthInSeconds > 0)
+            return transportSource.getCurrentPosition() / lengthInSeconds;
     }
     return 0.0;
 }
@@ -262,6 +266,11 @@ bool LucidkaraokeAudioProcessor::isPlaying() const
     return state == Playing;
 }
 
+bool LucidkaraokeAudioProcessor::isPaused() const
+{
+    return state == Paused;
+}
+
 bool LucidkaraokeAudioProcessor::isLoaded() const
 {
     return readerSource != nullptr;
@@ -269,13 +278,9 @@ bool LucidkaraokeAudioProcessor::isLoaded() const
 
 void LucidkaraokeAudioProcessor::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
-    if (source == &transportSource)
-    {
-        if (transportSource.isPlaying())
-            changeState(Playing);
-        else
-            changeState(Stopped);
-    }
+    // We manually control the state through our transport methods
+    // so we don't need to automatically change state based on transport source
+    juce::ignoreUnused(source);
 }
 
 void LucidkaraokeAudioProcessor::changeState(TransportState newState)
@@ -288,7 +293,9 @@ void LucidkaraokeAudioProcessor::changeState(TransportState newState)
         {
             case Stopped:
                 transportSource.setPosition(0.0);
-                [[fallthrough]];
+                transportSource.stop();
+                break;
+                
             case Paused:
                 transportSource.stop();
                 break;

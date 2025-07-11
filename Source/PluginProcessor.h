@@ -64,6 +64,7 @@ public:
     double getPosition() const;
     double getLength() const;
     bool isPlaying() const;
+    bool isPaused() const;
     bool isLoaded() const;
     
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;

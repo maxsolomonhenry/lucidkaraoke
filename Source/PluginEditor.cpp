@@ -88,9 +88,13 @@ void LucidkaraokeAudioProcessorEditor::timerCallback()
 {
     updateWaveformPosition();
     
-    transportControls->setPlayButtonEnabled(audioProcessor.isLoaded() && !audioProcessor.isPlaying());
-    transportControls->setPauseButtonEnabled(audioProcessor.isPlaying());
-    transportControls->setStopButtonEnabled(audioProcessor.isLoaded());
+    bool hasFile = audioProcessor.isLoaded();
+    bool isPlaying = audioProcessor.isPlaying();
+    bool isPaused = audioProcessor.isPaused();
+    
+    transportControls->setPlayButtonEnabled(hasFile && !isPlaying);
+    transportControls->setPauseButtonEnabled(hasFile && (isPlaying || isPaused));
+    transportControls->setStopButtonEnabled(hasFile && (isPlaying || isPaused));
 }
 
 void LucidkaraokeAudioProcessorEditor::loadFile(const juce::File& file)
