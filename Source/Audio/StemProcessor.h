@@ -20,6 +20,7 @@ private:
     bool checkDeMucsAvailability();
     juce::String buildDeMucsCommand();
     bool executeDeMucsCommand(const juce::String& command);
+    bool generateKaraokeTrack();
     
     void updateProgress(double progress, const juce::String& message);
     

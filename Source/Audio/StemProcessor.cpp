@@ -68,13 +68,19 @@ void StemProcessor::run()
     if (threadShouldExit())
         return;
     
+    if (success)
+    {
+        updateProgress(0.9, "Generating karaoke track...");
+        success = generateKaraokeTrack();
+    }
+    
     updateProgress(1.0, "Processing complete!");
     
     // Error handling is now done in executeDeMucsCommand
     // Only call completion callback if it wasn't already called
     if (onProcessingComplete && success)
     {
-        onProcessingComplete(true, "Stems have been successfully separated!");
+        onProcessingComplete(true, "Stems and karaoke track have been successfully generated!");
     }
 }
 
@@ -222,6 +228,80 @@ bool StemProcessor::executeDeMucsCommand(const juce::String& command)
     }
     
     return exitCode == 0;
+}
+
+bool StemProcessor::generateKaraokeTrack()
+{
+    // Find the DeMucs output directory (should be outputDirectory/htdemucs_ft/inputFileName)
+    juce::String inputFileName = inputFile.getFileNameWithoutExtension();
+    juce::File stemsDir = outputDirectory.getChildFile("htdemucs_ft").getChildFile(inputFileName);
+    
+    if (!stemsDir.exists())
+    {
+        if (onProcessingComplete)
+            onProcessingComplete(false, "Could not find stems directory: " + stemsDir.getFullPathName());
+        return false;
+    }
+    
+    // Check if all required stems exist
+    juce::File drumsFile = stemsDir.getChildFile("drums.mp3");
+    juce::File bassFile = stemsDir.getChildFile("bass.mp3");
+    juce::File otherFile = stemsDir.getChildFile("other.mp3");
+    juce::File karaokeFile = stemsDir.getChildFile("karaoke.mp3");
+    
+    if (!drumsFile.exists() || !bassFile.exists() || !otherFile.exists())
+    {
+        if (onProcessingComplete)
+            onProcessingComplete(false, "Missing required stem files in: " + stemsDir.getFullPathName());
+        return false;
+    }
+    
+    // Use FFmpeg to mix the non-vocal stems into a karaoke track
+    juce::StringArray args;
+    args.add("ffmpeg");
+    args.add("-i"); args.add(drumsFile.getFullPathName());
+    args.add("-i"); args.add(bassFile.getFullPathName());
+    args.add("-i"); args.add(otherFile.getFullPathName());
+    args.add("-filter_complex");
+    args.add("[0:a][1:a][2:a]amix=inputs=3:duration=longest:dropout_transition=3");
+    args.add("-c:a"); args.add("mp3");
+    args.add("-b:a"); args.add("320k");
+    args.add("-y"); // Overwrite output file if it exists
+    args.add(karaokeFile.getFullPathName());
+    
+    juce::String command = args.joinIntoString(" ");
+    
+    juce::ChildProcess process;
+    if (!process.start(command))
+    {
+        if (onProcessingComplete)
+            onProcessingComplete(false, "Failed to start FFmpeg for karaoke generation");
+        return false;
+    }
+    
+    // Wait for FFmpeg to complete
+    process.waitForProcessToFinish(60000); // 1 minute timeout
+    
+    int exitCode = process.getExitCode();
+    if (exitCode != 0)
+    {
+        juce::String errorOutput = process.readAllProcessOutput();
+        if (onProcessingComplete)
+            onProcessingComplete(false, "FFmpeg failed to generate karaoke track (exit code " + 
+                               juce::String(exitCode) + "): " + errorOutput);
+        return false;
+    }
+    
+    // Verify the karaoke file was created
+    if (!karaokeFile.exists())
+    {
+        if (onProcessingComplete)
+            onProcessingComplete(false, "Karaoke file was not created successfully");
+        return false;
+    }
+    
+    updateProgress(0.95, "Karaoke track generated successfully");
+    return true;
 }
 
 void StemProcessor::updateProgress(double progress, const juce::String& message)
