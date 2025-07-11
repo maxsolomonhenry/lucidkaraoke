@@ -14,7 +14,6 @@
 #include "Components/WaveformDisplay.h"
 #include "Components/TransportControls.h"
 #include "Components/LoadButton.h"
-#include "Components/SplitButton.h"
 #include "Components/ProgressBar.h"
 #include "Audio/StemProcessor.h"
 
@@ -41,7 +40,6 @@ private:
     DarkTheme darkTheme;
     
     std::unique_ptr<LoadButton> loadButton;
-    std::unique_ptr<SplitButton> splitButton;
     std::unique_ptr<WaveformDisplay> waveformDisplay;
     std::unique_ptr<TransportControls> transportControls;
     std::unique_ptr<StemProgressBar> progressBar;

@@ -3,7 +3,8 @@
 StemProgressBar::StemProgressBar()
     : currentProgress(0.0),
       isCompleted(false),
-      glowIntensity(0.0f)
+      glowIntensity(0.0f),
+      breathingPhase(0.0f)
 {
     startTimer(50); // Update animation at 20fps
 }
@@ -15,45 +16,57 @@ StemProgressBar::~StemProgressBar()
 
 void StemProgressBar::paint(juce::Graphics& g)
 {
-    auto bounds = getLocalBounds().toFloat();
-    auto height = bounds.getHeight();
-    auto width = bounds.getWidth();
+    auto originalBounds = getLocalBounds().toFloat();
     
-    // Background
+    // Make the bar thinner and centered
+    auto barHeight = originalBounds.getHeight() * 0.5f;
+    auto barBounds = originalBounds.withHeight(barHeight).withY(originalBounds.getCentreY() - barHeight * 0.5f);
+
+    auto height = barBounds.getHeight();
+    auto width = barBounds.getWidth();
+    
+    // Static background
     g.setColour(juce::Colour(0xff2a2a2a));
-    g.fillRoundedRectangle(bounds, height * 0.5f);
+    g.fillRoundedRectangle(barBounds, height * 0.5f);
     
     // Progress fill
-    if (currentProgress > 0.0)
+    auto progressWidth = juce::jmax(2.0f, static_cast<float>(width * currentProgress));
+    auto progressBounds = barBounds.withWidth(progressWidth);
+    
+    if (isCompleted)
     {
-        auto progressWidth = width * currentProgress;
-        auto progressBounds = bounds.withWidth(progressWidth);
+        // Green glow effect when complete
+        auto glowAlpha = 0.3f + (glowIntensity * 0.7f);
+        g.setColour(juce::Colour(0xff4caf50).withAlpha(glowAlpha));
         
-        if (isCompleted)
-        {
-            // Green glow effect when complete
-            auto glowAlpha = 0.3f + (glowIntensity * 0.7f);
-            g.setColour(juce::Colour(0xff4caf50).withAlpha(glowAlpha));
-            
-            // Outer glow
-            auto glowBounds = progressBounds.expanded(2.0f * glowIntensity);
-            g.fillRoundedRectangle(glowBounds, height * 0.5f);
-            
-            // Inner fill
-            g.setColour(juce::Colour(0xff4caf50));
-            g.fillRoundedRectangle(progressBounds, height * 0.5f);
-        }
-        else
-        {
-            // Blue progress during processing
-            g.setColour(juce::Colour(0xff4dabf7));
-            g.fillRoundedRectangle(progressBounds, height * 0.5f);
-        }
+        // Outer glow
+        auto glowBounds = progressBounds.expanded(2.0f * glowIntensity);
+        g.fillRoundedRectangle(glowBounds, height * 0.5f);
+        
+        // Inner fill
+        g.setColour(juce::Colour(0xff4caf50));
+        g.fillRoundedRectangle(progressBounds, height * 0.5f);
+    }
+    else if (currentProgress > 0.0)
+    {
+        // Blue progress with a breathing glow effect
+        float breathingIntensity = 0.5f + 0.5f * std::sin(breathingPhase);
+        auto progressColour = juce::Colour(0xff4dabf7);
+
+        // Outer glow
+        auto glowAlpha = 0.2f + (breathingIntensity * 0.5f);
+        g.setColour(progressColour.withAlpha(glowAlpha));
+        auto glowBounds = progressBounds.expanded(height * 0.5f * breathingIntensity);
+        g.fillRoundedRectangle(glowBounds, height * 0.5f);
+
+        // Inner solid fill
+        g.setColour(progressColour);
+        g.fillRoundedRectangle(progressBounds, height * 0.5f);
     }
     
-    // Subtle border
+    // Subtle border for the whole bar
     g.setColour(juce::Colour(0xff404040));
-    g.drawRoundedRectangle(bounds, height * 0.5f, 1.0f);
+    g.drawRoundedRectangle(barBounds, height * 0.5f, 1.0f);
 }
 
 void StemProgressBar::resized()
@@ -63,11 +76,14 @@ void StemProgressBar::resized()
 
 void StemProgressBar::timerCallback()
 {
+    updateBreathing();
+    
     if (isCompleted)
     {
         updateGlow();
-        repaint();
     }
+    
+    repaint();
 }
 
 void StemProgressBar::setProgress(double progress)
@@ -92,6 +108,7 @@ void StemProgressBar::reset()
     currentProgress = 0.0;
     isCompleted = false;
     glowIntensity = 0.0f;
+    breathingPhase = 0.0f;
     repaint();
 }
 
@@ -101,4 +118,15 @@ void StemProgressBar::updateGlow()
     static float glowPhase = 0.0f;
     glowPhase += 0.05f;
     glowIntensity = 0.5f + 0.5f * std::sin(glowPhase);
+}
+
+void StemProgressBar::updateBreathing()
+{
+    // Breathing pulse at ~0.5 Hz (2 second cycle)
+    // At 20fps (50ms timer), we increment by 2π/(20*2) = π/20 per frame
+    breathingPhase += 0.157f; // π/20 ≈ 0.157
+    
+    // Keep phase in reasonable range
+    if (breathingPhase > 2.0f * 3.14159f)
+        breathingPhase -= 2.0f * 3.14159f;
 }

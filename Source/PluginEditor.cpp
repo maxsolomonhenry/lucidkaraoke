@@ -21,13 +21,6 @@ LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (Lucidkaraoke
     };
     addAndMakeVisible(loadButton.get());
     
-    splitButton = std::make_unique<SplitButton>();
-    splitButton->onSplitRequested = [this](const juce::File& /*file*/) {
-        auto currentFile = audioProcessor.getLastFileURL().getLocalFile();
-        if (currentFile.existsAsFile())
-            splitAudioStems(currentFile);
-    };
-    addAndMakeVisible(splitButton.get());
     
     waveformDisplay = std::make_unique<WaveformDisplay>();
     waveformDisplay->onPositionChanged = [this](double position) {
@@ -86,8 +79,10 @@ void LucidkaraokeAudioProcessorEditor::resized()
     
     bounds.removeFromTop(margin / 2);
     
-    auto splitButtonHeight = 60;
-    splitButton->setBounds(bounds.removeFromTop(splitButtonHeight));
+    // Progress bar below load button, above waveform
+    auto progressHeight = 12;
+    auto progressBounds = bounds.removeFromTop(progressHeight);
+    progressBar->setBounds(progressBounds);
     
     bounds.removeFromTop(margin);
     
@@ -95,13 +90,6 @@ void LucidkaraokeAudioProcessorEditor::resized()
     auto transportBounds = bounds.removeFromBottom(transportHeight);
     
     bounds.removeFromBottom(margin);
-    
-    // Progress bar at the bottom, thin and subtle
-    auto progressHeight = 6;
-    auto progressBounds = bounds.removeFromBottom(progressHeight);
-    progressBar->setBounds(progressBounds);
-    
-    bounds.removeFromBottom(margin / 2);
     
     waveformDisplay->setBounds(bounds);
     transportControls->setBounds(transportBounds);
@@ -119,7 +107,6 @@ void LucidkaraokeAudioProcessorEditor::timerCallback()
     transportControls->setPauseButtonEnabled(hasFile && (isPlaying || isPaused));
     transportControls->setStopButtonEnabled(hasFile && (isPlaying || isPaused));
     
-    splitButton->setEnabled(hasFile && !splitButton->isProcessing());
 }
 
 void LucidkaraokeAudioProcessorEditor::loadFile(const juce::File& file)
@@ -149,7 +136,6 @@ void LucidkaraokeAudioProcessorEditor::splitAudioStems(const juce::File& inputFi
     auto tempDir = juce::File::getSpecialLocation(juce::File::tempDirectory)
                        .getChildFile("lucidkaraoke_stems_" + juce::String(juce::Random::getSystemRandom().nextInt64()));
     
-    splitButton->setProcessing(true);
     
     // Create and start the stem processor
     auto* processor = new StemProcessor(inputFile, tempDir);
@@ -162,7 +148,6 @@ void LucidkaraokeAudioProcessorEditor::splitAudioStems(const juce::File& inputFi
     
     processor->onProcessingComplete = [this, tempDir](bool success, const juce::String& message) {
         juce::MessageManager::callAsync([this, success, message, tempDir]() {
-            splitButton->setProcessing(false);
             
             if (success)
             {

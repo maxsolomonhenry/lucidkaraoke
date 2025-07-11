@@ -23,8 +23,10 @@ private:
     double currentProgress;
     bool isCompleted;
     float glowIntensity;
+    float breathingPhase;
     
     void updateGlow();
+    void updateBreathing();
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StemProgressBar)
 };
