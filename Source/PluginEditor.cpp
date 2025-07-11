@@ -21,6 +21,14 @@ LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (Lucidkaraoke
     };
     addAndMakeVisible(loadButton.get());
     
+    splitButton = std::make_unique<SplitButton>();
+    splitButton->onSplitRequested = [this](const juce::File& /*file*/) {
+        auto currentFile = audioProcessor.getLastFileURL().getLocalFile();
+        if (currentFile.existsAsFile())
+            splitAudioStems(currentFile);
+    };
+    addAndMakeVisible(splitButton.get());
+    
     waveformDisplay = std::make_unique<WaveformDisplay>();
     waveformDisplay->onPositionChanged = [this](double position) {
         audioProcessor.setPosition(position);
@@ -73,6 +81,11 @@ void LucidkaraokeAudioProcessorEditor::resized()
     auto loadButtonHeight = 60;
     loadButton->setBounds(bounds.removeFromTop(loadButtonHeight));
     
+    bounds.removeFromTop(margin / 2);
+    
+    auto splitButtonHeight = 60;
+    splitButton->setBounds(bounds.removeFromTop(splitButtonHeight));
+    
     bounds.removeFromTop(margin);
     
     auto transportHeight = 80;
@@ -95,6 +108,8 @@ void LucidkaraokeAudioProcessorEditor::timerCallback()
     transportControls->setPlayButtonEnabled(hasFile && !isPlaying);
     transportControls->setPauseButtonEnabled(hasFile && (isPlaying || isPaused));
     transportControls->setStopButtonEnabled(hasFile && (isPlaying || isPaused));
+    
+    splitButton->setEnabled(hasFile && !splitButton->isProcessing());
 }
 
 void LucidkaraokeAudioProcessorEditor::loadFile(const juce::File& file)
@@ -109,4 +124,38 @@ void LucidkaraokeAudioProcessorEditor::updateWaveformPosition()
     {
         waveformDisplay->setPositionRelative(audioProcessor.getPosition());
     }
+}
+
+void LucidkaraokeAudioProcessorEditor::splitAudioStems(const juce::File& inputFile)
+{
+    if (!inputFile.existsAsFile())
+        return;
+    
+    // Create output directory in the same location as the input file
+    auto outputDir = inputFile.getParentDirectory().getChildFile(inputFile.getFileNameWithoutExtension() + "_stems");
+    
+    splitButton->setProcessing(true);
+    
+    // Create and start the stem processor
+    auto* processor = new StemProcessor(inputFile, outputDir);
+    processor->onProcessingComplete = [this, outputDir](bool success, const juce::String& message) {
+        juce::MessageManager::callAsync([this, success, message, outputDir]() {
+            splitButton->setProcessing(false);
+            
+            juce::String displayMessage = message;
+            if (success)
+            {
+                displayMessage += "\n\nStems saved to:\n" + outputDir.getFullPathName();
+                displayMessage += "\n\nLook for the 'htdemucs_ft' subfolder containing your separated stems.";
+            }
+            
+            juce::AlertWindow::showMessageBoxAsync(
+                success ? juce::AlertWindow::InfoIcon : juce::AlertWindow::WarningIcon,
+                success ? "Stem Separation Complete" : "Stem Separation Failed",
+                displayMessage
+            );
+        });
+    };
+    
+    processor->launchThread();
 }

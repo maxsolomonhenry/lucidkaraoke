@@ -20,7 +20,9 @@ juce_add_plugin(lucidkaraoke
     PLUGIN_MANUFACTURER_CODE Juce
     PLUGIN_CODE Or41
     FORMATS AU VST3 Standalone
-    PRODUCT_NAME "LucidKaraoke")
+    PRODUCT_NAME "LucidKaraoke"
+    HARDENED_RUNTIME_ENABLED FALSE
+    APP_SANDBOX_ENABLED FALSE)
 
 juce_generate_juce_header(lucidkaraoke)
 
@@ -37,7 +39,11 @@ target_sources(lucidkaraoke
         Source/Components/TransportControls.cpp
         Source/Components/TransportControls.h
         Source/Components/LoadButton.cpp
-        Source/Components/LoadButton.h)
+        Source/Components/LoadButton.h
+        Source/Components/SplitButton.cpp
+        Source/Components/SplitButton.h
+        Source/Audio/StemProcessor.cpp
+        Source/Audio/StemProcessor.h)
 
 target_compile_definitions(lucidkaraoke
     PUBLIC

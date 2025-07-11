@@ -14,6 +14,8 @@
 #include "Components/WaveformDisplay.h"
 #include "Components/TransportControls.h"
 #include "Components/LoadButton.h"
+#include "Components/SplitButton.h"
+#include "Audio/StemProcessor.h"
 
 //==============================================================================
 /**
@@ -38,11 +40,13 @@ private:
     DarkTheme darkTheme;
     
     std::unique_ptr<LoadButton> loadButton;
+    std::unique_ptr<SplitButton> splitButton;
     std::unique_ptr<WaveformDisplay> waveformDisplay;
     std::unique_ptr<TransportControls> transportControls;
     
     void loadFile(const juce::File& file);
     void updateWaveformPosition();
+    void splitAudioStems(const juce::File& inputFile);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LucidkaraokeAudioProcessorEditor)
 };
