@@ -248,8 +248,8 @@ void LucidkaraokeAudioProcessorEditor::mixVocalsWithKaraoke(const juce::File& re
                                   "_with_vocals_" + timestamp + ".mp3";
     juce::File outputFile = karaokeFile.getParentDirectory().getChildFile(outputFileName);
     
-    // Create vocal mixer
-    auto* mixer = new VocalMixer(recordingFile, karaokeFile, outputFile);
+    // Create vocal mixer with buffer size for latency compensation
+    auto* mixer = new VocalMixer(recordingFile, karaokeFile, outputFile, audioProcessor.getRecordingBufferSize());
     
     // Wire up progress updates to the progress bar
     mixer->onProgressUpdate = [this](double progress, const juce::String& statusMessage) {

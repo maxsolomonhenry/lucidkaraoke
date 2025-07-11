@@ -38,6 +38,7 @@ LucidkaraokeAudioProcessor::LucidkaraokeAudioProcessor()
     if (setup.inputDeviceName.isNotEmpty())
     {
         setup.inputChannels.setBit(0);
+        recordingBufferSize = setup.bufferSize; // Store for latency compensation
         recordingDeviceManager.setAudioDeviceSetup(setup, true);
     }
 

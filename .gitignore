@@ -101,6 +101,9 @@ wheels/
 *.egg
 MANIFEST
 
+# Helpers
+build.sh
+
 # Virtual environments
 venv/
 env/

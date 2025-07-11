@@ -79,6 +79,7 @@ public:
     bool isRecording() const;
     bool isCompleteRecording() const { return completeRecordingSession; }
     juce::File getLastRecordingFile() const { return recordingFile; }
+    int getRecordingBufferSize() const { return recordingBufferSize; }
 
 private:
     class RecordingCallback : public juce::AudioIODeviceCallback
@@ -141,6 +142,9 @@ private:
     
     // Track recording pause state for transport synchronization
     bool recordingPaused = false;
+    
+    // Store audio buffer size for latency compensation
+    int recordingBufferSize = 0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LucidkaraokeAudioProcessor)
 };

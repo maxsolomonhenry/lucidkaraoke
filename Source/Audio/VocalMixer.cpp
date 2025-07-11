@@ -1,10 +1,11 @@
 #include "VocalMixer.h"
 
-VocalMixer::VocalMixer(const juce::File& recordingFile, const juce::File& karaokeFile, const juce::File& outputFile)
+VocalMixer::VocalMixer(const juce::File& recordingFile, const juce::File& karaokeFile, const juce::File& outputFile, int bufferSize)
     : Thread("VocalMixer"),
       recordingFile(recordingFile),
       karaokeFile(karaokeFile),
-      outputFile(outputFile)
+      outputFile(outputFile),
+      bufferSizeForLatencyComp(bufferSize)
 {
     updateProgress(0.0, "Initializing vocal mixer...");
 }
@@ -44,6 +45,12 @@ void VocalMixer::run()
     }
     
     updateProgress(0.3, "Preparing audio mixing...");
+    
+    // Trim audio files for latency compensation
+    if (!trimAudioFilesForLatency())
+    {
+        return; // Error already reported in trimAudioFilesForLatency
+    }
     
     // Create output directory if it doesn't exist
     auto outputDir = outputFile.getParentDirectory();
@@ -103,7 +110,7 @@ juce::String VocalMixer::buildMixingCommand()
     // Audio filter to mix the two inputs with volume adjustment
     // Karaoke at 70% volume, vocals at 100% volume
     args.add("-filter_complex");
-    args.add("[0:a]volume=1.0[vocals];[1:a]volume=0.7[karaoke];[vocals][karaoke]amix=inputs=2:duration=longest:dropout_transition=3");
+    args.add("[0:a]volume=1.0[vocals];[1:a]volume=0.7[karaoke];[vocals][karaoke]amix=inputs=2:duration=longest:dropout_transition=3,loudnorm=I=-23:LRA=11:TP=-1.5");
     
     // Output settings
     args.add("-c:a"); args.add("mp3");
@@ -196,4 +203,64 @@ void VocalMixer::updateProgress(double progress, const juce::String& message)
             onProgressUpdate(progress, message);
         });
     }
+}
+
+bool VocalMixer::trimAudioFilesForLatency()
+{
+    if (bufferSizeForLatencyComp <= 0)
+    {
+        // No latency compensation needed
+        return true;
+    }
+    
+    // Assume 44100 Hz sample rate (could be made more precise by reading file metadata)
+    double sampleRate = 44100.0;
+    
+    // Create trimmed recording file (remove first bufferSize samples to compensate for input latency)
+    juce::File trimmedRecording = trimAudioFile(recordingFile, bufferSizeForLatencyComp, sampleRate);
+    if (!trimmedRecording.exists())
+    {
+        if (onMixingComplete)
+            onMixingComplete(false, "Failed to trim recording file for latency compensation");
+        return false;
+    }
+    
+    // Update file reference for mixing
+    recordingFile = trimmedRecording;
+    
+    return true;
+}
+
+juce::File VocalMixer::trimAudioFile(const juce::File& inputFile, int samplesToTrimStart, double sampleRate)
+{
+    juce::String suffix = "_trimStart" + juce::String(samplesToTrimStart);
+    
+    juce::File outputFile = inputFile.getParentDirectory()
+                              .getChildFile(inputFile.getFileNameWithoutExtension() + suffix + 
+                                          "." + inputFile.getFileExtension());
+    
+    juce::StringArray args;
+    args.add("ffmpeg");
+    args.add("-i"); args.add(inputFile.getFullPathName());
+    args.add("-af"); args.add("atrim=start_sample=" + juce::String(samplesToTrimStart));
+    
+    // Output settings - maintain same format as input
+    args.add("-c:a"); args.add("pcm_s16le"); // Use PCM for precision
+    args.add("-y"); // Overwrite
+    args.add(outputFile.getFullPathName());
+    
+    juce::ChildProcess process;
+    if (!process.start(args.joinIntoString(" ")))
+    {
+        return juce::File();
+    }
+    
+    process.waitForProcessToFinish(30000); // 30 second timeout
+    
+    if (process.getExitCode() != 0 || !outputFile.exists())
+    {
+        return juce::File();
+    }
+    
+    return outputFile;
 }
