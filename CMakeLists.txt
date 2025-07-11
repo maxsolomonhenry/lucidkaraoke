@@ -42,6 +42,8 @@ target_sources(lucidkaraoke
         Source/Components/LoadButton.h
         Source/Components/SplitButton.cpp
         Source/Components/SplitButton.h
+        Source/Components/ProgressBar.cpp
+        Source/Components/ProgressBar.h
         Source/Audio/StemProcessor.cpp
         Source/Audio/StemProcessor.h)
 

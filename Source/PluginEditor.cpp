@@ -47,6 +47,9 @@ LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (Lucidkaraoke
     };
     addAndMakeVisible(transportControls.get());
     
+    progressBar = std::make_unique<StemProgressBar>();
+    addAndMakeVisible(progressBar.get());
+    
     startTimer(50);
     
     setSize (800, 600);
@@ -93,6 +96,13 @@ void LucidkaraokeAudioProcessorEditor::resized()
     
     bounds.removeFromBottom(margin);
     
+    // Progress bar at the bottom, thin and subtle
+    auto progressHeight = 6;
+    auto progressBounds = bounds.removeFromBottom(progressHeight);
+    progressBar->setBounds(progressBounds);
+    
+    bounds.removeFromBottom(margin / 2);
+    
     waveformDisplay->setBounds(bounds);
     transportControls->setBounds(transportBounds);
 }
@@ -116,6 +126,10 @@ void LucidkaraokeAudioProcessorEditor::loadFile(const juce::File& file)
 {
     audioProcessor.loadFile(file);
     waveformDisplay->loadURL(juce::URL(file));
+    
+    // Magic: automatically start stem processing in background
+    progressBar->reset();
+    splitAudioStems(file);
 }
 
 void LucidkaraokeAudioProcessorEditor::updateWaveformPosition()
@@ -139,24 +153,35 @@ void LucidkaraokeAudioProcessorEditor::splitAudioStems(const juce::File& inputFi
     
     // Create and start the stem processor
     auto* processor = new StemProcessor(inputFile, tempDir);
+    
+    // Wire up progress updates to the progress bar
+    processor->onProgressUpdate = [this](double progress, const juce::String& statusMessage) {
+        progressBar->setProgress(progress);
+        // Optional: could show status message somewhere in UI
+    };
+    
     processor->onProcessingComplete = [this, tempDir](bool success, const juce::String& message) {
         juce::MessageManager::callAsync([this, success, message, tempDir]() {
             splitButton->setProcessing(false);
             
-            juce::String displayMessage = message;
             if (success)
             {
-                displayMessage += "\n\nStems processed successfully in background.";
-                displayMessage += "\n\nTemp location: " + tempDir.getFullPathName();
+                progressBar->setComplete(true);
+                // Magic is ready! No blocking dialog needed
+                // TODO: This is where the magic happens at the end of the song
             }
-            
-            juce::AlertWindow::showMessageBoxAsync(
-                success ? juce::AlertWindow::InfoIcon : juce::AlertWindow::WarningIcon,
-                success ? "Stem Separation Complete" : "Stem Separation Failed",
-                displayMessage
-            );
+            else
+            {
+                progressBar->reset();
+                // Only show error messages, not success messages
+                juce::AlertWindow::showMessageBoxAsync(
+                    juce::AlertWindow::WarningIcon,
+                    "Stem Separation Failed",
+                    message
+                );
+            }
         });
     };
     
-    processor->launchThread();
+    processor->startThread();
 }

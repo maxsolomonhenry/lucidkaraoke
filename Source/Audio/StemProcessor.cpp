@@ -1,12 +1,11 @@
 #include "StemProcessor.h"
 
 StemProcessor::StemProcessor(const juce::File& inputFile, const juce::File& outputDirectory)
-    : ThreadWithProgressWindow("Processing Audio Stems", true, true),
+    : Thread("StemProcessor"),
       inputFile(inputFile),
       outputDirectory(outputDirectory)
 {
-    setProgress(0.0);
-    setStatusMessage("Initializing DeMucs...");
+    updateProgress(0.0, "Initializing DeMucs...");
 }
 
 StemProcessor::~StemProcessor()
@@ -15,8 +14,7 @@ StemProcessor::~StemProcessor()
 
 void StemProcessor::run()
 {
-    setStatusMessage("Checking DeMucs availability...");
-    setProgress(0.1);
+    updateProgress(0.1, "Checking DeMucs availability...");
     
     if (!checkDeMucsAvailability())
     {
@@ -29,8 +27,7 @@ void StemProcessor::run()
         return;
     }
     
-    setStatusMessage("Checking FFmpeg availability...");
-    setProgress(0.15);
+    updateProgress(0.15, "Checking FFmpeg availability...");
     
     // Check if FFmpeg is available
     juce::ChildProcess ffmpegCheck;
@@ -45,8 +42,7 @@ void StemProcessor::run()
     }
     ffmpegCheck.waitForProcessToFinish(5000);
     
-    setStatusMessage("Preparing audio file...");
-    setProgress(0.2);
+    updateProgress(0.2, "Preparing audio file...");
     
     // Create output directory if it doesn't exist
     if (!outputDirectory.exists())
@@ -59,22 +55,20 @@ void StemProcessor::run()
         }
     }
     
-    setStatusMessage("Running DeMucs stem separation...");
-    setProgress(0.3);
+    updateProgress(0.3, "Running DeMucs stem separation...");
     
     juce::String command = buildDeMucsCommand();
     
     if (threadShouldExit())
         return;
     
-    setProgress(0.4);
+    updateProgress(0.4, "Processing audio...");
     bool success = executeDeMucsCommand(command);
     
     if (threadShouldExit())
         return;
     
-    setProgress(1.0);
-    setStatusMessage("Processing complete!");
+    updateProgress(1.0, "Processing complete!");
     
     // Error handling is now done in executeDeMucsCommand
     // Only call completion callback if it wasn't already called
@@ -126,7 +120,7 @@ bool StemProcessor::executeDeMucsCommand(const juce::String& command)
 {
     juce::ChildProcess process;
     
-    setStatusMessage("Starting DeMucs...");
+    updateProgress(0.35, "Starting DeMucs...");
     
     // Write the command to a debug file so we can see exactly what's being executed
     juce::File debugFile("/tmp/demucs_command.txt");
@@ -134,7 +128,7 @@ bool StemProcessor::executeDeMucsCommand(const juce::String& command)
     
     if (!process.start(command))
     {
-        setStatusMessage("Failed to start DeMucs");
+        updateProgress(0.4, "Failed to start DeMucs");
         if (onProcessingComplete)
             onProcessingComplete(false, "Failed to start DeMucs process");
         return false;
@@ -168,22 +162,21 @@ bool StemProcessor::executeDeMucsCommand(const juce::String& command)
             // Look for progress indicators in the output
             if (currentOutput.contains("%|") || currentOutput.contains("seconds/s"))
             {
-                setStatusMessage("DeMucs processing... " + currentOutput.substring(0, 50) + "...");
+                updateProgress(0.4 + (0.4 * static_cast<double>(elapsedMs) / timeoutMs), "DeMucs processing... " + currentOutput.substring(0, 50) + "...");
             }
             else if (currentOutput.contains("Selected model") || currentOutput.contains("Separated tracks"))
             {
-                setStatusMessage("DeMucs: " + currentOutput.substring(0, 80) + "...");
+                updateProgress(0.4 + (0.4 * static_cast<double>(elapsedMs) / timeoutMs), "DeMucs: " + currentOutput.substring(0, 80) + "...");
             }
         }
         
         // Update progress based on elapsed time (rough estimation)
         double progress = 0.4 + (0.5 * static_cast<double>(elapsedMs) / timeoutMs);
-        setProgress(juce::jmin(progress, 0.9));
         
         // Update status message periodically
         if (elapsedMs % 10000 == 0) // Every 10 seconds
         {
-            setStatusMessage("Processing stems... (" + juce::String(elapsedMs / 1000) + "s elapsed)");
+            updateProgress(juce::jmin(progress, 0.9), "Processing stems... (" + juce::String(elapsedMs / 1000) + "s elapsed)");
         }
         
         juce::Thread::sleep(checkIntervalMs);
@@ -193,7 +186,7 @@ bool StemProcessor::executeDeMucsCommand(const juce::String& command)
     if (process.isRunning())
     {
         process.kill();
-        setStatusMessage("DeMucs process timed out");
+        updateProgress(0.9, "DeMucs process timed out");
         return false; // Timeout
     }
     
@@ -206,12 +199,12 @@ bool StemProcessor::executeDeMucsCommand(const juce::String& command)
         processOutput += remainingOutput;
     }
     
-    setStatusMessage("DeMucs finished with exit code: " + juce::String(exitCode));
+    updateProgress(0.95, "DeMucs finished with exit code: " + juce::String(exitCode));
     
     // Store the output for later use in error reporting
     if (processOutput.isNotEmpty())
     {
-        setStatusMessage("DeMucs output: " + processOutput.substring(0, 200) + "...");
+        updateProgress(1.0, "DeMucs output: " + processOutput.substring(0, 200) + "...");
         
         // Pass the output to the completion callback for better error reporting
         if (onProcessingComplete)
@@ -229,4 +222,14 @@ bool StemProcessor::executeDeMucsCommand(const juce::String& command)
     }
     
     return exitCode == 0;
+}
+
+void StemProcessor::updateProgress(double progress, const juce::String& message)
+{
+    if (onProgressUpdate)
+    {
+        juce::MessageManager::callAsync([this, progress, message]() {
+            onProgressUpdate(progress, message);
+        });
+    }
 }

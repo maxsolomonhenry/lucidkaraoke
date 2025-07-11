@@ -2,7 +2,7 @@
 
 #include <JuceHeader.h>
 
-class StemProcessor : public juce::ThreadWithProgressWindow
+class StemProcessor : public juce::Thread
 {
 public:
     StemProcessor(const juce::File& inputFile, const juce::File& outputDirectory);
@@ -11,6 +11,7 @@ public:
     void run() override;
     
     std::function<void(bool success, const juce::String& message)> onProcessingComplete;
+    std::function<void(double progress, const juce::String& statusMessage)> onProgressUpdate;
     
 private:
     juce::File inputFile;
@@ -19,6 +20,8 @@ private:
     bool checkDeMucsAvailability();
     juce::String buildDeMucsCommand();
     bool executeDeMucsCommand(const juce::String& command);
+    
+    void updateProgress(double progress, const juce::String& message);
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StemProcessor)
 };
