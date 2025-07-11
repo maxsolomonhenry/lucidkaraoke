@@ -49,18 +49,23 @@ void StemProgressBar::paint(juce::Graphics& g)
     }
     else if (currentProgress > 0.0)
     {
-        // Blue progress with a breathing glow effect
-        float breathingIntensity = 0.5f + 0.5f * std::sin(breathingPhase);
+        // Blue progress with a breathing color (oscillating brightness)
+        float breathingValue = std::sin(breathingPhase); // Varies from -1.0 to 1.0
         auto progressColour = juce::Colour(0xff4dabf7);
+        juce::Colour breathingColour;
 
-        // Outer glow
-        auto glowAlpha = 0.2f + (breathingIntensity * 0.5f);
-        g.setColour(progressColour.withAlpha(glowAlpha));
-        auto glowBounds = progressBounds.expanded(height * 0.5f * breathingIntensity);
-        g.fillRoundedRectangle(glowBounds, height * 0.5f);
-
-        // Inner solid fill
-        g.setColour(progressColour);
+        if (breathingValue >= 0.0f)
+        {
+            // Interpolate from base to light
+            breathingColour = progressColour.interpolatedWith(progressColour.brighter(0.5f), breathingValue);
+        }
+        else
+        {
+            // Interpolate from base to dark
+            breathingColour = progressColour.interpolatedWith(progressColour.darker(0.5f), -breathingValue);
+        }
+        
+        g.setColour(breathingColour);
         g.fillRoundedRectangle(progressBounds, height * 0.5f);
     }
     
