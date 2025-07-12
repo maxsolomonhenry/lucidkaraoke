@@ -207,17 +207,22 @@ void VocalMixer::updateProgress(double progress, const juce::String& message)
 
 bool VocalMixer::trimAudioFilesForLatency()
 {
-    if (bufferSizeForLatencyComp <= 0)
+    // Get sample rate from the recording file using JUCE
+    juce::AudioFormatManager formatManager;
+    formatManager.registerBasicFormats();
+    
+    std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(recordingFile));
+    if (!reader)
     {
-        // No latency compensation needed
-        return true;
+        if (onMixingComplete)
+            onMixingComplete(false, "Failed to read recording file metadata");
+        return false;
     }
     
-    // Assume 44100 Hz sample rate (could be made more precise by reading file metadata)
-    double sampleRate = 44100.0;
+    double sampleRate = reader->sampleRate;
     
-    // Create trimmed recording file (remove first bufferSize samples to compensate for input latency)
-    juce::File trimmedRecording = trimAudioFile(recordingFile, bufferSizeForLatencyComp, sampleRate);
+    // Create trimmed recording file (remove first 100ms)
+    juce::File trimmedRecording = trimAudioFile(recordingFile, sampleRate);
     if (!trimmedRecording.exists())
     {
         if (onMixingComplete)
@@ -231,9 +236,9 @@ bool VocalMixer::trimAudioFilesForLatency()
     return true;
 }
 
-juce::File VocalMixer::trimAudioFile(const juce::File& inputFile, int samplesToTrimStart, double sampleRate)
+juce::File VocalMixer::trimAudioFile(const juce::File& inputFile, double sampleRate)
 {
-    juce::String suffix = "_trimStart" + juce::String(samplesToTrimStart);
+    juce::String suffix = "_trim100ms";
     
     juce::File outputFile = inputFile.getParentDirectory()
                               .getChildFile(inputFile.getFileNameWithoutExtension() + suffix + 
@@ -242,7 +247,7 @@ juce::File VocalMixer::trimAudioFile(const juce::File& inputFile, int samplesToT
     juce::StringArray args;
     args.add("ffmpeg");
     args.add("-i"); args.add(inputFile.getFullPathName());
-    args.add("-af"); args.add("atrim=start_sample=" + juce::String(samplesToTrimStart));
+    args.add("-af"); args.add("atrim=start=0.1"); // Trim first 100ms
     
     // Output settings - maintain same format as input
     args.add("-c:a"); args.add("pcm_s16le"); // Use PCM for precision

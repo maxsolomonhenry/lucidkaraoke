@@ -23,7 +23,7 @@ private:
     juce::String buildMixingCommand();
     bool executeMixingCommand(const juce::String& command);
     bool trimAudioFilesForLatency();
-    juce::File trimAudioFile(const juce::File& inputFile, int samplesToTrimStart, double sampleRate);
+    juce::File trimAudioFile(const juce::File& inputFile, double sampleRate);
     
     void updateProgress(double progress, const juce::String& message);
     
