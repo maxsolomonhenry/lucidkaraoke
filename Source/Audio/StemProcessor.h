@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "RVCProcessor.h"
 
 class StemProcessor : public juce::Thread
 {
@@ -20,7 +21,9 @@ private:
     bool checkDeMucsAvailability();
     juce::String buildDeMucsCommand();
     bool executeDeMucsCommand(const juce::String& command);
+    bool processVocalWithRVC();
     bool generateKaraokeTrack();
+    bool generateRVCKaraokeTrack();
     
     void updateProgress(double progress, const juce::String& message);
     

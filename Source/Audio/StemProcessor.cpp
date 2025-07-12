@@ -1,4 +1,5 @@
 #include "StemProcessor.h"
+#include "RVCProcessor.h"
 
 StemProcessor::StemProcessor(const juce::File& inputFile, const juce::File& outputDirectory)
     : Thread("StemProcessor"),
@@ -70,8 +71,24 @@ void StemProcessor::run()
     
     if (success)
     {
-        updateProgress(0.9, "Generating karaoke track...");
+        updateProgress(0.75, "Generating karaoke track...");
         success = generateKaraokeTrack();
+        
+        if (success)
+        {
+            updateProgress(0.85, "Processing vocals with RVC...");
+            bool rvcSuccess = processVocalWithRVC();
+            
+            if (rvcSuccess)
+            {
+                updateProgress(0.95, "Generating RVC karaoke track...");
+                generateRVCKaraokeTrack(); // Don't fail the whole process if this fails
+            }
+            else
+            {
+                updateProgress(0.95, "RVC processing failed, continuing with standard karaoke track...");
+            }
+        }
     }
     
     updateProgress(1.0, "Processing complete!");
@@ -80,7 +97,7 @@ void StemProcessor::run()
     // Only call completion callback if it wasn't already called
     if (onProcessingComplete && success)
     {
-        onProcessingComplete(true, "Stems and karaoke track have been successfully generated!");
+        onProcessingComplete(true, "Stems and karaoke track have been successfully generated! Check output folder for RVC-enhanced tracks if available.");
     }
 }
 
@@ -301,6 +318,162 @@ bool StemProcessor::generateKaraokeTrack()
     }
     
     updateProgress(0.95, "Karaoke track generated successfully");
+    return true;
+}
+
+bool StemProcessor::processVocalWithRVC()
+{
+    updateProgress(0.76, "RVC: Starting processVocalWithRVC function");
+    
+    // Find the DeMucs output directory
+    juce::String inputFileName = inputFile.getFileNameWithoutExtension();
+    juce::File stemsDir = outputDirectory.getChildFile("htdemucs_ft").getChildFile(inputFileName);
+    
+    updateProgress(0.77, "RVC: Looking for stems in " + stemsDir.getFullPathName());
+    
+    if (!stemsDir.exists())
+    {
+        updateProgress(0.8, "RVC: Stems directory not found, skipping RVC processing");
+        return false;
+    }
+    
+    // Check if vocal stem exists
+    juce::File vocalFile = stemsDir.getChildFile("vocals.mp3");
+    if (!vocalFile.exists())
+    {
+        updateProgress(0.8, "RVC: Vocal stem not found, skipping RVC processing");
+        return false;
+    }
+    
+    // Create RVC output file
+    juce::File rvcVocalFile = stemsDir.getChildFile("vocals_rvc.mp3");
+    
+    // Create a simple RVC command using our Python script
+    // For now, we'll apply a basic pitch shift as demonstration
+    juce::String pythonExecutable = "/Users/maxhenry/Documents/cpp/lucidkaraoke/demucs_env/bin/python3";
+    juce::String rvcScript = "/Users/maxhenry/Documents/cpp/lucidkaraoke/rvc_simple_inference.py";
+    
+    juce::StringArray args;
+    args.add(pythonExecutable);
+    args.add(rvcScript);
+    args.add("--input");
+    args.add(vocalFile.getFullPathName());
+    args.add("--output");
+    args.add(rvcVocalFile.getFullPathName());
+    args.add("--pitch");
+    args.add("2"); // 2 semitones up for demonstration
+    args.add("--f0_method");
+    args.add("crepe");
+    
+    juce::String command = args.joinIntoString(" ");
+    
+    // Write the command to a debug file for inspection
+    juce::File debugFile = stemsDir.getChildFile("rvc_command.txt");
+    debugFile.replaceWithText(command);
+    updateProgress(0.78, "RVC: Command written to " + debugFile.getFullPathName());
+    
+    juce::ChildProcess process;
+    if (!process.start(command))
+    {
+        updateProgress(0.8, "RVC: Failed to start RVC process, skipping");
+        return false;
+    }
+    
+    // Wait for RVC processing to complete
+    process.waitForProcessToFinish(120000); // 2 minute timeout
+    
+    int exitCode = process.getExitCode();
+    if (exitCode != 0)
+    {
+        juce::String errorOutput = process.readAllProcessOutput();
+        updateProgress(0.8, "RVC processing failed (exit code " + juce::String(exitCode) + "), continuing without RVC");
+        return false;
+    }
+    
+    // Verify the RVC vocal file was created
+    if (!rvcVocalFile.exists())
+    {
+        updateProgress(0.8, "RVC vocal file was not created, continuing without RVC");
+        return false;
+    }
+    
+    updateProgress(0.8, "RVC vocal processing completed");
+    return true;
+}
+
+bool StemProcessor::generateRVCKaraokeTrack()
+{
+    // Find the DeMucs output directory
+    juce::String inputFileName = inputFile.getFileNameWithoutExtension();
+    juce::File stemsDir = outputDirectory.getChildFile("htdemucs_ft").getChildFile(inputFileName);
+    
+    if (!stemsDir.exists())
+    {
+        if (onProcessingComplete)
+            onProcessingComplete(false, "Could not find stems directory: " + stemsDir.getFullPathName());
+        return false;
+    }
+    
+    // Check if all required files exist
+    juce::File drumsFile = stemsDir.getChildFile("drums.mp3");
+    juce::File bassFile = stemsDir.getChildFile("bass.mp3");
+    juce::File otherFile = stemsDir.getChildFile("other.mp3");
+    juce::File rvcVocalFile = stemsDir.getChildFile("vocals_rvc.mp3");
+    juce::File rvcKaraokeFile = stemsDir.getChildFile("karaoke_with_rvc.mp3");
+    
+    if (!drumsFile.exists() || !bassFile.exists() || !otherFile.exists() || !rvcVocalFile.exists())
+    {
+        if (onProcessingComplete)
+            onProcessingComplete(false, "Missing required files for RVC karaoke generation in: " + stemsDir.getFullPathName());
+        return false;
+    }
+    
+    // Use FFmpeg to mix the RVC vocal with other stems
+    juce::StringArray args;
+    args.add("ffmpeg");
+    args.add("-i"); args.add(drumsFile.getFullPathName());
+    args.add("-i"); args.add(bassFile.getFullPathName());
+    args.add("-i"); args.add(otherFile.getFullPathName());
+    args.add("-i"); args.add(rvcVocalFile.getFullPathName());
+    args.add("-filter_complex");
+    args.add("[0:a][1:a][2:a][3:a]amix=inputs=4:duration=longest:dropout_transition=3");
+    args.add("-c:a"); args.add("mp3");
+    args.add("-b:a"); args.add("320k");
+    args.add("-y"); // Overwrite output file if it exists
+    args.add(rvcKaraokeFile.getFullPathName());
+    
+    juce::String command = args.joinIntoString(" ");
+    
+    juce::ChildProcess process;
+    if (!process.start(command))
+    {
+        if (onProcessingComplete)
+            onProcessingComplete(false, "Failed to start FFmpeg for RVC karaoke generation");
+        return false;
+    }
+    
+    // Wait for FFmpeg to complete
+    process.waitForProcessToFinish(60000); // 1 minute timeout
+    
+    int exitCode = process.getExitCode();
+    if (exitCode != 0)
+    {
+        juce::String errorOutput = process.readAllProcessOutput();
+        if (onProcessingComplete)
+            onProcessingComplete(false, "FFmpeg failed to generate RVC karaoke track (exit code " + 
+                               juce::String(exitCode) + "): " + errorOutput);
+        return false;
+    }
+    
+    // Verify the RVC karaoke file was created
+    if (!rvcKaraokeFile.exists())
+    {
+        if (onProcessingComplete)
+            onProcessingComplete(false, "RVC karaoke file was not created successfully");
+        return false;
+    }
+    
+    updateProgress(0.98, "RVC karaoke track generated successfully");
     return true;
 }
 

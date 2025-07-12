@@ -52,7 +52,9 @@ target_sources(lucidkaraoke
         Source/Audio/StemProcessor.cpp
         Source/Audio/StemProcessor.h
         Source/Audio/VocalMixer.cpp
-        Source/Audio/VocalMixer.h)
+        Source/Audio/VocalMixer.h
+        Source/Audio/RVCProcessor.cpp
+        Source/Audio/RVCProcessor.h)
 
 target_compile_definitions(lucidkaraoke
     PUBLIC
