@@ -7,18 +7,26 @@ I've prepared a few thoughts below on how I might approach this problem.
 __Lucid Karaoke__: As a proof of concept, I've also started building out a prototype  that allows the user to sing along to a fully mixed music track, then replace the voice of the singer with their own. See the github repo for the codebase, (work in progress).
 * https://github.com/maxsolomonhenry/lucidkaraoke
 
-## Problem Statement
+## Problem Statement (High Level)
 
-1. How do you leverage LLMs to put _highly-functional_ audio prototypes in the hands of users as early and fast as possible, allowing for feedback and rapid iteration to hone the value proposition and sharpen the user need, _while_:
+At the core of this thought experiment are three interconnected questions:
 
-1. (_Audio criterion_) Ensuring a _stable_ audio backend that delivers an experience that is as close as possible to the product vision, for high-quality user feedback.  This kind of feedback is impossible with traditional wire-framing tools.
-    * __The answer is JUCE__: This C++ framework provides an excellent foundation, with a highly flexible UI and a robust audio engine.
+1. How might we leverage generative AI to let users __hear and feel__ an audio concept on day one, rather than waiting for the first engineering build, _while..._
 
-1. (_Efficiency criterion_) Leveraging the generated code to save on dev work down the line: designing an architecture that scales, and a codebase that can be easily maintained and augmented by devs, while leveraging as much of the generated code as possible. And most importantly:
-    * __The answer is feedback sessions__, early and often, with an _architect_. Programming in a well-known audio dev paradigm (JUCE) ensures you're speaking the _lingua franca_ of DSP engineers, who can then grab and scale it.
+1. Ensuring these rapid prototypes are built on a solid, scalable foundation so that the AI code accelerates, rather than complicates, the final development, _and..._
 
-1. __The human angle (conviviality)__: Perhaps the most interesting challenge, how to work collaboratively with devs, architects and designers, getting __buy-in__, providing __time-saving without over-stepping__; how to define a project that all stakeholders can build out and have a sense of ownership of. 
-    * __Collaborative brainstorming__ sessions (1h)  with developers is key, moving from the architecture phase into the development phase. 
+1. Integrate this AI-driven approach into the workflow in a way that __empowers__ the developers and designers, fostering a culture of _shared ownership_ and rapid learning?
+
+## Problems and Solutions
+
+* __Problem 1 - Audio Backend__: How to ensure a _stable_ audio backend that delivers an experience that is as close as possible to the product vision, for high-quality user feedback.  This kind of feedback is impossible with traditional wire-framing tools.
+    * __Solution__: The JUCE C++ framework provides an excellent foundation for functional audio prototypes, with a highly flexible UI and a robust audio engine.
+
+* __Problem 2 - Efficiency__: How to leverage the generated code to save on dev work down the line, design an architecture that scales, and a codebase that can be easily maintained and augmented by devs, while leveraging as much of the generated code as possible.
+    * __Solution__: It is crucial to have feedback sessions, early and often, with a software _architect_. Programming in a well-known audio dev paradigm (JUCE) ensures you're speaking the _lingua franca_ of DSP engineers, who can then grab and scale it.
+
+1. __Problem 3 - Conviviality__: Perhaps the most interesting challenge, how to work collaboratively with devs and designers to get __buy-in__ and build a product that all stakeholders can feel a sense of ownership of. 
+    * __Solution__: Collaborative brainstorming sessions (1h) with developers is key, moving from the architecture phase into the development phase. 
 
 ### Collaboration is Key
 __Collaborative brainstorming__ with subject matter experts (SMEs) is key to alignment and buy-in. As a Product Owner (PO), it is crucial to be curious and humble, allowing devs and architects to find errors and shortcomings while defining a solution together. This guarantees that solutions, once implemented in regular sprints, will come from a place of ownership and understanding
