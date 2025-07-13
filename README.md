@@ -72,7 +72,7 @@ LucidKaraoke revolutionizes karaoke by letting you sing along to *any* song and 
 - [ ] **Real-time Monitoring**: Live audio feedback during recording
 - [ ] **Batch Processing**: Handle multiple songs efficiently
 
-## 🎯 Vision
+## Vision
 
 Imagine being able to:
 - **Sing with your favorite artists** - Load any song and perform alongside the music
@@ -101,7 +101,7 @@ LucidKaraoke makes this possible by combining advanced AI with an intuitive inte
   ```
 - JUCE framework (located at `../JUCE` relative to project root)
 
-## 🏗️ Building
+## Building
 
 ```bash
 # Configure and build
