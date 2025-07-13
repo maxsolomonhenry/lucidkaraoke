@@ -11,22 +11,21 @@ __Lucid Karaoke__: As a proof of concept, I've also started building out a proto
 
 At the core of this thought experiment are three interconnected questions:
 
-1. How might we leverage generative AI to let users __hear and feel__ an audio concept on day one, rather than waiting for the first engineering build, _while..._
+1. How to leverage generative AI to let users __hear and feel__ an audio concept as early as possible, rather than waiting for the first engineering build.
 
-1. Ensuring these rapid prototypes are built on a solid, scalable foundation so that the AI code accelerates, rather than complicates, the final development, _and..._
+1. How to ensure these rapid prototypes are built on a solid, scalable foundation so that the AI code accelerates, rather than complicates, the final development.
 
-1. Integrate this AI-driven approach into the workflow in a way that __empowers__ the developers and designers, fostering a culture of _shared ownership_ and rapid learning?
+1. How to integrate this approach into the current workflow, such that it __empowers__ the developers and designers, fostering a culture of _shared ownership_ and rapid learning.
 
-## Problems and Solutions
+## Solutions
 
-* __Problem 1 - Audio Backend__: How to ensure a _stable_ audio backend that delivers an experience that is as close as possible to the product vision, for high-quality user feedback.  This kind of feedback is impossible with traditional wire-framing tools.
-    * __Solution__: The JUCE C++ framework provides an excellent foundation for functional audio prototypes, with a highly flexible UI and a robust audio engine.
+* __Solution__: The JUCE C++ framework provides an excellent foundation for functional audio prototypes, with a highly flexible UI and a robust audio engine that is above and beyond traditional wireframe tools. 
+    * While traditionally slow, agentic AI makes development in JUCE rapid and simple (see __LucidKaraoke__ repo for proof of concept).
 
-* __Problem 2 - Efficiency__: How to leverage the generated code to save on dev work down the line, design an architecture that scales, and a codebase that can be easily maintained and augmented by devs, while leveraging as much of the generated code as possible.
-    * __Solution__: It is crucial to have feedback sessions, early and often, with a software _architect_. Programming in a well-known audio dev paradigm (JUCE) ensures you're speaking the _lingua franca_ of DSP engineers, who can then grab and scale it.
+* __Solution__: High-level feedback sessions with a software _architect_ can help align on code organization and scalability during prototype iteration.
+    * Programming in a well-known audio framework (JUCE) ensures you're speaking the _lingua franca_ of DSP engineers, who can then grab and scale it.
 
-1. __Problem 3 - Conviviality__: Perhaps the most interesting challenge, how to work collaboratively with devs and designers to get __buy-in__ and build a product that all stakeholders can feel a sense of ownership of. 
-    * __Solution__: Collaborative brainstorming sessions (1h) with developers is key, moving from the architecture phase into the development phase. 
+* __Solution__: Collaborative brainstorming sessions with developers will establish code style and boilerplate and address implementation "gotchas" early, fostering a shared sense of ownership and buy-in before the scaling phase.
 
 ### Collaboration is Key
 __Collaborative brainstorming__ with subject matter experts (SMEs) is key to alignment and buy-in. As a Product Owner (PO), it is crucial to be curious and humble, allowing devs and architects to find errors and shortcomings while defining a solution together. This guarantees that solutions, once implemented in regular sprints, will come from a place of ownership and understanding
@@ -54,6 +53,8 @@ The workflow can be considered in two phases: (1) an "incubation period" leverag
 
 1. __Scale__: PO incubation process hands off to standard sprint cycle, with feature fine-tuning driven by user stories and story points, prioritized by backlog grooming. This cycle continues until product is ready for launch.
 
+See the readme below for an initial proof of concept project in JUCE.
+
 # LucidKaraoke
 
 **Transform any song into your personal karaoke experience with AI-powered voice conversion**
@@ -64,21 +65,24 @@ LucidKaraoke revolutionizes karaoke by letting you sing along to *any* song and 
 
 ## Current Progress
 
+**Update 13/07/25**: The user can load a song of their choosing, press play and sing along (headphones only for now). In a background thread, the engine will split the music source and remove the vocals, then apply the recorded take on-top of the instrumental backing. The current pipeline isolates both the user voice and the input voice, meaning the infrastructure is in place to train a few-shot vocal clone engine (on the user's take), then use a voice conversion model (e.g., RVC) to convert the clean vocal stem from the original track into the timbre of the user's voice. The latter service will run in the cloud (API calls through `ngrok`) for portablity and speed.
+
 ### To-do list:
 - [x] **Audio Engine**: JUCE-based cross-platform audio processing
 - [x] **File Loading**: Support for standard audio formats
 - [x] **Waveform Visualization**: Real-time audio display with playhead
 - [x] **Transport Controls**: Play, pause, stop, and seek functionality
 - [x] **Local Stem Separation**: DeMucs integration for vocals/instrumental splitting
-- [x] **Dark Theme UI**: Modern, professional interface design
-- [x] **Multi-format Export**: VST3, AU, and Standalone builds
+- [x] **Beyond Headphones-Only**: Implement acoustic echo canceller for sing-along with speakers.
+- [ ] **Portable Setup**: Refactor for code portability
 - [ ] **Cloud-Based Processing**: Move stem separation to cloud for faster processing
 - [ ] **Voice Conversion Pipeline**: AI model training and vocal replacement
 - [ ] **Cloud Voice Processing**: Python script integration via API calls
 - [ ] **UX Overhaul**: Streamlined workflow and improved user experience
-- [ ] **Portable Setup**: One-click installation and configuration
 - [ ] **Real-time Monitoring**: Live audio feedback during recording
 - [ ] **Batch Processing**: Handle multiple songs efficiently
+- [ ] **Accumulate User Voice**: Accumulate recordings to learn more detailed cloning model of user voice
+- [ ] **Multiple Users**: Multiple user profiles, ability to load/reset cloning model. 
 
 ## Vision
 
@@ -96,7 +100,6 @@ LucidKaraoke makes this possible by combining advanced AI with an intuitive inte
 - **Stem Separation**: DeMucs (Python-based AI)
 - **Voice Conversion**: Custom AI pipeline (in development)
 - **Build System**: CMake
-- **UI Theme**: Custom dark theme implementation
 
 ## Prerequisites
 
@@ -128,14 +131,6 @@ cmake --build . --target lucidkaraoke_AU            # Audio Unit plugin
 - **VST3**: `build/lucidkaraoke_artefacts/VST3/LucidKaraoke.vst3`
 - **AU**: `build/lucidkaraoke_artefacts/AU/LucidKaraoke.component`
 
-## Quick Start
-
-1. **Build the application** using the instructions above
-2. **Load an audio file** using the Load button
-3. **View the waveform** and use transport controls to navigate
-4. **Split stems** using the Split button (separates vocals from instrumentals)
-5. **Record your performance** (coming soon!)
-
 ## Roadmap
 
 ### Phase 1: Core Foundation (Complete)
@@ -153,7 +148,7 @@ cmake --build . --target lucidkaraoke_AU            # Audio Unit plugin
 - One-click setup and deployment
 
 ### Phase 4: Advanced Features 
-- Multiple voice style options
+- Multiple users
 - Batch processing capabilities
 - Social sharing integration
 
