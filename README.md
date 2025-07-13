@@ -4,7 +4,7 @@ The idea of accelerating audio product development with AI has stuck in my mind 
 
 I've prepared a few thoughts below on how I might approach this problem.
 
-__Lucid Karaoke__: As a proof of concept, I've also started building out a prototype  that allows the user to sing along to a fully mixed music track, then replace the voice of the singer with their own. See the github repo for the codebase, (work in progress).
+__Lucid Karaoke__: As a proof of concept, I've also started building out a JUCE prototype that allows the user to sing along to a fully mixed music track, then replace the voice of the singer with their own. See the github repo for the codebase, (work in progress).
 * https://github.com/maxsolomonhenry/lucidkaraoke
 
 ## Problem Statement (High Level)
@@ -15,7 +15,7 @@ At the core of this thought experiment are three interconnected questions:
 
 1. How to ensure these rapid prototypes are built on a solid, scalable foundation so that the AI code accelerates, rather than complicates, the final development.
 
-1. How to integrate this approach into the current workflow, such that it __empowers__ the developers and designers, fostering a culture of _shared ownership_ and rapid learning.
+1. _Conviviality:_ How to integrate this approach into the current workflow, such that it __empowers__ the developers and designers, fostering a culture of _shared ownership_ and rapid learning.
 
 ## Solutions
 
@@ -31,7 +31,7 @@ At the core of this thought experiment are three interconnected questions:
 __Collaborative brainstorming__ with subject matter experts (SMEs) is key to alignment and buy-in. As a Product Owner (PO), it is crucial to be curious and humble, allowing devs and architects to find errors and shortcomings while defining a solution together. This guarantees that solutions, once implemented in regular sprints, will come from a place of ownership and understanding
 
 ## Proposed Workflow
-Shifting to AI-Driven Product represents an important significant transition, and as with all transitional periods, iteration and honest feedback is key. I am not yet familiar with LANDR's internal culture, but here is a first best guess and how this process might work.
+Shifting to AI-Driven Product represents an important significant transition, and as with all transitional periods, iteration and honest feedback is key. Every organization has its own workflows and culture, but here is a first best guess and how this process might work.
 
 The workflow can be considered in two phases: (1) an "incubation period" leveraging LLMs and brainstorming to drive _microsprints_ (2-3 days) rendering a fully-functional, feature complete MVP and a Product Requirements Document (PRD); and (2) building the product to scale, incorporating with LANDR platform, etc. through traditional two-week sprints.
 
