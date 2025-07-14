@@ -4,7 +4,7 @@ The idea of accelerating audio product development with AI has stuck in my mind 
 
 I've prepared a few thoughts below on how I might approach this problem.
 
-__Lucid Karaoke__: As a proof of concept, I've also started building out a JUCE prototype that allows the user to sing along to a fully mixed music track, then replace the voice of the singer with their own. See the github repo for the codebase, (work in progress).
+__Lucid Karaoke__: As a proof of concept, I've also started building out a JUCE prototype that allows the user to sing along to a fully mixed music track, then replace the voice of the singer with their own. See the github repo for the codebase (work in progress).
 * https://github.com/maxsolomonhenry/lucidkaraoke
 
 ## Problem Statement (High Level)
@@ -33,9 +33,9 @@ __Collaborative brainstorming__ with subject matter experts (SMEs) is key to ali
 ## Proposed Workflow
 Shifting to AI-Driven Product represents an important significant transition, and as with all transitional periods, iteration and honest feedback is key. Every organization has its own workflows and culture, but here is a first best guess and how this process might work.
 
-The workflow can be considered in two phases: (1) an "incubation period" leveraging LLMs and brainstorming to drive _microsprints_ (2-3 days) rendering a fully-functional, feature complete MVP and a Product Requirements Document (PRD); and (2) building the product to scale, incorporating with LANDR platform, etc. through traditional two-week sprints.
-
 ![alt text](figs/workflow.png)
+
+The workflow can be considered in two phases: (1) an "incubation period" leveraging LLMs and brainstorming to drive _microsprints_ (2-3 days) rendering a fully-functional, feature complete MVP and a Product Requirements Document (PRD); and (2) building the product to scale, incorporating with LANDR platform, etc. through traditional two-week sprints.
 
 1. __Product Hypothesis__: PO works with Product Manager (PM) to establish first hypothesis on the product; what is the market need, who are the target users, and what is the proposed value. 
     * __Output__: PO develops user personas (e.g., _amateur musician_) and use-case scenarios. Early product UI sketches.
