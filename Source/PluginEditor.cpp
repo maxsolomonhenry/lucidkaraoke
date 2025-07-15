@@ -11,7 +11,7 @@
 
 //==============================================================================
 LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (LucidkaraokeAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p), stemProcessingInProgress(false), currentPlaybackMode(PlaybackMode::Normal)
+    : AudioProcessorEditor (&p), audioProcessor (p), stemProcessingInProgress(false), currentPlaybackMode(PlaybackMode::Normal), canToggleBetweenSources(false)
 {
     setLookAndFeel(&darkTheme);
 
@@ -44,6 +44,12 @@ LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (Lucidkaraoke
 
     progressBar = std::make_unique<StemProgressBar>();
     addAndMakeVisible(progressBar.get());
+
+    sourceToggleButton = std::make_unique<SourceToggleButton>();
+    sourceToggleButton->onToggleStateChanged = [this](bool showMixed) {
+        togglePlaybackSource(showMixed);
+    };
+    addAndMakeVisible(sourceToggleButton.get());
 
     startTimer(50);
 
@@ -97,7 +103,18 @@ void LucidkaraokeAudioProcessorEditor::resized()
     
     bounds.removeFromBottom(margin);
     
+    // Add space for source toggle button above transport controls
+    auto toggleHeight = 50;
+    auto toggleBounds = bounds.removeFromBottom(toggleHeight);
+    bounds.removeFromBottom(margin / 2);
+    
     waveformDisplay->setBounds(bounds);
+    
+    // Position the source toggle button (center it horizontally)
+    auto toggleWidth = 100;
+    auto centeredToggleBounds = toggleBounds.withWidth(toggleWidth).withCentre(toggleBounds.getCentre());
+    sourceToggleButton->setBounds(centeredToggleBounds);
+    
     transportControls->setBounds(transportBounds);
 }
 
@@ -112,6 +129,9 @@ void LucidkaraokeAudioProcessorEditor::timerCallback()
     transportControls->setPlayButtonEnabled(hasFile && !isPlaying && !stemProcessingInProgress);
     transportControls->setPauseButtonEnabled(hasFile && (isPlaying || isPaused));
     transportControls->setStopButtonEnabled(hasFile && (isPlaying || isPaused));
+    
+    // Update source toggle button state
+    sourceToggleButton->setEnabled(canToggleBetweenSources);
     
 }
 
@@ -143,6 +163,11 @@ void LucidkaraokeAudioProcessorEditor::loadFile(const juce::File& file)
     // Track current input file for vocal mixing later
     currentInputFile = file;
     
+    // Reset toggle state
+    canToggleBetweenSources = false;
+    currentMixedFile = juce::File();
+    sourceToggleButton->setToggleState(false);
+    
     // Magic: automatically start stem processing in background
     progressBar->reset();
     progressBar->setStatusText("Preparing to split stems... (put on headphones!)");
@@ -158,6 +183,11 @@ void LucidkaraokeAudioProcessorEditor::loadMixedFile(const juce::File& file)
     // Set to mixed file playback mode
     currentPlaybackMode = PlaybackMode::MixedFilePlayback;
     audioProcessor.setRecordingEnabled(false);
+    
+    // Store mixed file and enable toggle
+    currentMixedFile = file;
+    canToggleBetweenSources = true;
+    sourceToggleButton->setToggleState(true);
     
     // Update progress bar
     progressBar->setComplete(true);
@@ -309,4 +339,31 @@ void LucidkaraokeAudioProcessorEditor::mixVocalsWithKaraoke(const juce::File& re
     progressBar->reset();
     progressBar->setStatusText("Mixing vocals with karaoke...");
     mixer->startThread();
+}
+
+void LucidkaraokeAudioProcessorEditor::togglePlaybackSource(bool showMixed)
+{
+    if (!canToggleBetweenSources)
+        return;
+    
+    if (showMixed && currentMixedFile.exists())
+    {
+        // Switch to mixed file
+        audioProcessor.loadFile(currentMixedFile);
+        waveformDisplay->loadURL(juce::URL(currentMixedFile));
+        waveformDisplay->setDisplayMode(WaveformDisplay::DisplayMode::MixedFile);
+        currentPlaybackMode = PlaybackMode::MixedFilePlayback;
+        audioProcessor.setRecordingEnabled(false);
+        progressBar->setStatusText("Playing mixed file with vocals");
+    }
+    else if (!showMixed && currentInputFile.exists())
+    {
+        // Switch to original file
+        audioProcessor.loadFile(currentInputFile);
+        waveformDisplay->loadURL(juce::URL(currentInputFile));
+        waveformDisplay->setDisplayMode(WaveformDisplay::DisplayMode::Normal);
+        currentPlaybackMode = PlaybackMode::Normal;
+        audioProcessor.setRecordingEnabled(true);
+        progressBar->setStatusText("Playing original file");
+    }
 }
