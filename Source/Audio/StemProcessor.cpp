@@ -63,7 +63,7 @@ void StemProcessor::run()
     if (threadShouldExit())
         return;
     
-    updateProgress(0.4, "Processing audio...");
+    updateProgress(0.4, "Splitting stems...");
     bool success = executeDeMucsCommand(command);
     
     if (threadShouldExit())
@@ -91,7 +91,7 @@ void StemProcessor::run()
         }
     }
     
-    updateProgress(1.0, "Processing complete!");
+    updateProgress(1.0, "Complete!");
     
     // Error handling is now done in executeDeMucsCommand
     // Only call completion callback if it wasn't already called

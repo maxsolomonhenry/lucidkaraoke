@@ -26,7 +26,7 @@ TransportControls::TransportControls()
     addAndMakeVisible(playButton.get());
     addAndMakeVisible(pauseButton.get());
     addAndMakeVisible(stopButton.get());
-    addAndMakeVisible(recordButton.get());
+    // Record button functionality preserved but not visible in UI
 }
 
 TransportControls::~TransportControls()
@@ -56,15 +56,15 @@ void TransportControls::resized()
     auto buttonHeight = 40;
     auto spacing = 10;
     
-    // Now we have 4 buttons (including record)
-    auto totalWidth = (buttonWidth * 4) + (spacing * 3);
+    // Now we have 3 buttons (play, pause, stop)
+    auto totalWidth = (buttonWidth * 3) + (spacing * 2);
     auto startX = (bounds.getWidth() - totalWidth) / 2;
     auto startY = (bounds.getHeight() - buttonHeight) / 2;
     
     playButton->setBounds(startX, startY, buttonWidth, buttonHeight);
     pauseButton->setBounds(startX + buttonWidth + spacing, startY, buttonWidth, buttonHeight);
     stopButton->setBounds(startX + (buttonWidth + spacing) * 2, startY, buttonWidth, buttonHeight);
-    recordButton->setBounds(startX + (buttonWidth + spacing) * 3, startY, buttonWidth, buttonHeight);
+    // Record button not positioned (not visible)
 }
 
 void TransportControls::setPlayButtonEnabled(bool enabled)

@@ -4,7 +4,8 @@ StemProgressBar::StemProgressBar()
     : currentProgress(0.0),
       isCompleted(false),
       glowIntensity(0.0f),
-      breathingPhase(0.0f)
+      breathingPhase(0.0f),
+      statusText("")
 {
     startTimer(50); // Update animation at 20fps
 }
@@ -18,9 +19,13 @@ void StemProgressBar::paint(juce::Graphics& g)
 {
     auto originalBounds = getLocalBounds().toFloat();
     
-    // Make the bar thinner and centered
-    auto barHeight = originalBounds.getHeight() * 0.5f;
-    auto barBounds = originalBounds.withHeight(barHeight).withY(originalBounds.getCentreY() - barHeight * 0.5f);
+    // Reserve space for text at the bottom
+    auto textHeight = 16.0f;
+    auto progressAreaBounds = originalBounds.withHeight(originalBounds.getHeight() - textHeight);
+    
+    // Make the bar thinner and centered in the progress area
+    auto barHeight = progressAreaBounds.getHeight() * 0.6f;
+    auto barBounds = progressAreaBounds.withHeight(barHeight).withY(progressAreaBounds.getCentreY() - barHeight * 0.5f);
 
     auto height = barBounds.getHeight();
     auto width = barBounds.getWidth();
@@ -72,6 +77,15 @@ void StemProgressBar::paint(juce::Graphics& g)
     // Subtle border for the whole bar
     g.setColour(juce::Colour(0xff404040));
     g.drawRoundedRectangle(barBounds, height * 0.5f, 1.0f);
+    
+    // Draw status text below the bar
+    if (statusText.isNotEmpty())
+    {
+        auto textBounds = originalBounds.withY(barBounds.getBottom() + 4.0f).withHeight(textHeight);
+        g.setColour(juce::Colour(0xffaaaaaa));
+        g.setFont(juce::FontOptions(12.0f));
+        g.drawText(statusText, textBounds, juce::Justification::centred);
+    }
 }
 
 void StemProgressBar::resized()
@@ -114,6 +128,13 @@ void StemProgressBar::reset()
     isCompleted = false;
     glowIntensity = 0.0f;
     breathingPhase = 0.0f;
+    statusText = "";
+    repaint();
+}
+
+void StemProgressBar::setStatusText(const juce::String& text)
+{
+    statusText = text;
     repaint();
 }
 

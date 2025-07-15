@@ -56,6 +56,7 @@ private:
     // Track stem processing for vocal mixing
     juce::File currentStemOutputDir;
     juce::File currentInputFile;
+    bool stemProcessingInProgress;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LucidkaraokeAudioProcessorEditor)
 };

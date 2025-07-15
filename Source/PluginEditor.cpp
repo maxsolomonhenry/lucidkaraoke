@@ -11,7 +11,7 @@
 
 //==============================================================================
 LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (LucidkaraokeAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p)
+    : AudioProcessorEditor (&p), audioProcessor (p), stemProcessingInProgress(false)
 {
     setLookAndFeel(&darkTheme);
 
@@ -85,8 +85,8 @@ void LucidkaraokeAudioProcessorEditor::resized()
     
     bounds.removeFromTop(margin / 2);
     
-    // Progress bar below load button, above waveform
-    auto progressHeight = 12;
+    // Progress bar below load button, above waveform (increased height for status text)
+    auto progressHeight = 32;
     auto progressBounds = bounds.removeFromTop(progressHeight);
     progressBar->setBounds(progressBounds);
     
@@ -109,7 +109,7 @@ void LucidkaraokeAudioProcessorEditor::timerCallback()
     bool isPlaying = audioProcessor.isPlaying();
     bool isPaused = audioProcessor.isPaused();
     
-    transportControls->setPlayButtonEnabled(hasFile && !isPlaying);
+    transportControls->setPlayButtonEnabled(hasFile && !isPlaying && !stemProcessingInProgress);
     transportControls->setPauseButtonEnabled(hasFile && (isPlaying || isPaused));
     transportControls->setStopButtonEnabled(hasFile && (isPlaying || isPaused));
     
@@ -140,6 +140,7 @@ void LucidkaraokeAudioProcessorEditor::loadFile(const juce::File& file)
     
     // Magic: automatically start stem processing in background
     progressBar->reset();
+    progressBar->setStatusText("Preparing to split stems...");
     splitAudioStems(file);
 }
 
@@ -163,21 +164,27 @@ void LucidkaraokeAudioProcessorEditor::splitAudioStems(const juce::File& inputFi
     // Track stem output directory for vocal mixing later
     currentStemOutputDir = tempDir;
     
+    // Set processing state
+    stemProcessingInProgress = true;
+    
     // Create and start the stem processor
     auto* processor = new StemProcessor(inputFile, tempDir);
     
     // Wire up progress updates to the progress bar
     processor->onProgressUpdate = [this](double progress, const juce::String& statusMessage) {
         progressBar->setProgress(progress);
-        // Optional: could show status message somewhere in UI
+        progressBar->setStatusText(statusMessage);
     };
     
     processor->onProcessingComplete = [this, tempDir](bool success, const juce::String& message) {
         juce::MessageManager::callAsync([this, success, message, tempDir]() {
+            // Reset processing state
+            stemProcessingInProgress = false;
             
             if (success)
             {
                 progressBar->setComplete(true);
+                progressBar->setStatusText("Stems ready - you can now play!");
                 
                 // Check if we have a completed recording waiting for the karaoke track
                 if (!audioProcessor.isRecording() && audioProcessor.isCompleteRecording())
@@ -189,6 +196,7 @@ void LucidkaraokeAudioProcessorEditor::splitAudioStems(const juce::File& inputFi
             else
             {
                 progressBar->reset();
+                progressBar->setStatusText("Stem separation failed");
                 // Only show error messages, not success messages
                 juce::AlertWindow::showMessageBoxAsync(
                     juce::AlertWindow::WarningIcon,
@@ -254,7 +262,7 @@ void LucidkaraokeAudioProcessorEditor::mixVocalsWithKaraoke(const juce::File& re
     // Wire up progress updates to the progress bar
     mixer->onProgressUpdate = [this](double progress, const juce::String& statusMessage) {
         progressBar->setProgress(progress);
-        // Optional: could show status message somewhere in UI
+        progressBar->setStatusText(statusMessage);
     };
     
     mixer->onMixingComplete = [this, outputFile](bool success, const juce::String& message) {
@@ -262,6 +270,7 @@ void LucidkaraokeAudioProcessorEditor::mixVocalsWithKaraoke(const juce::File& re
             if (success)
             {
                 progressBar->setComplete(true);
+                progressBar->setStatusText("Vocal mixing complete!");
                 
                 // Show success message with option to reveal file
                 juce::AlertWindow::showOkCancelBox(
@@ -282,6 +291,7 @@ void LucidkaraokeAudioProcessorEditor::mixVocalsWithKaraoke(const juce::File& re
             else
             {
                 progressBar->reset();
+                progressBar->setStatusText("Vocal mixing failed");
                 juce::AlertWindow::showMessageBoxAsync(
                     juce::AlertWindow::WarningIcon,
                     "Vocal Mixing Failed",
@@ -293,5 +303,6 @@ void LucidkaraokeAudioProcessorEditor::mixVocalsWithKaraoke(const juce::File& re
     
     // Reset progress bar and start mixing
     progressBar->reset();
+    progressBar->setStatusText("Mixing vocals with karaoke...");
     mixer->startThread();
 }
