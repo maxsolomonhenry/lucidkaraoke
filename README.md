@@ -105,10 +105,9 @@ LucidKaraoke makes this possible by combining advanced AI with an intuitive inte
 
 - CMake 3.22+
 - C++17 compiler
-- Python 3.x with DeMucs:
+- Python 3.8+ with DeMucs (run setup script):
   ```bash
-  pip install demucs
-  brew install ffmpeg  # macOS
+  ./setup_demucs_env.sh
   ```
 - JUCE framework (located at `../JUCE` relative to project root)
 

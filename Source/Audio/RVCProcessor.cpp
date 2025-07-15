@@ -1,10 +1,10 @@
 #include "RVCProcessor.h"
 
-RVCProcessor::RVCProcessor(const juce::File& inputVocalFile, const juce::File& outputFile, const juce::String& modelPath)
+RVCProcessor::RVCProcessor(const juce::File& initialInputVocalFile, const juce::File& initialOutputFile, const juce::String& initialModelPath)
     : Thread("RVCProcessor"),
-      inputVocalFile(inputVocalFile),
-      outputFile(outputFile),
-      modelPath(modelPath)
+      inputVocalFile(initialInputVocalFile),
+      outputFile(initialOutputFile),
+      modelPath(initialModelPath)
 {
     updateProgress(0.0, "Initializing RVC processor...");
 }
@@ -92,7 +92,21 @@ bool RVCProcessor::checkRVCAvailability()
     juce::ChildProcess process;
     
     // Test the virtual environment's Python with basic imports
-    juce::String testCommand = "/Users/maxhenry/Documents/cpp/lucidkaraoke/demucs_env/bin/python3 -c \"import torch; import librosa; import soundfile; print('RVC dependencies available')\"";
+    juce::File currentDir = juce::File::getSpecialLocation(juce::File::currentExecutableFile).getParentDirectory();
+    juce::File venvPython = currentDir.getChildFile("../demucs_env/bin/python3");
+    
+    if (!venvPython.exists())
+    {
+        // Try relative to working directory
+        venvPython = juce::File::getCurrentWorkingDirectory().getChildFile("demucs_env/bin/python3");
+    }
+    
+    if (!venvPython.exists())
+    {
+        return false;
+    }
+    
+    juce::String testCommand = venvPython.getFullPathName() + " -c \"import torch; import librosa; import soundfile; print('RVC dependencies available')\"";;
     
     if (process.start(testCommand))
     {
@@ -105,11 +119,23 @@ bool RVCProcessor::checkRVCAvailability()
 
 juce::String RVCProcessor::buildRVCCommand()
 {
-    juce::String pythonExecutable = "/Users/maxhenry/Documents/cpp/lucidkaraoke/demucs_env/bin/python3";
+    // Find the virtual environment relative to the executable or working directory
+    juce::File currentDir = juce::File::getSpecialLocation(juce::File::currentExecutableFile).getParentDirectory();
+    juce::File venvPython = currentDir.getChildFile("../demucs_env/bin/python3");
+    juce::File scriptFile = currentDir.getChildFile("../rvc_simple_inference.py");
+    
+    if (!venvPython.exists())
+    {
+        // Try relative to working directory
+        venvPython = juce::File::getCurrentWorkingDirectory().getChildFile("demucs_env/bin/python3");
+        scriptFile = juce::File::getCurrentWorkingDirectory().getChildFile("rvc_simple_inference.py");
+    }
+    
+    juce::String pythonExecutable = venvPython.getFullPathName();
     
     // For now, we'll use a simple Python script approach
     // Later we can integrate with a full RVC repository
-    juce::String rvcScript = "/Users/maxhenry/Documents/cpp/lucidkaraoke/rvc_simple_inference.py";
+    juce::String rvcScript = scriptFile.getFullPathName();
     
     juce::StringArray args;
     args.add(pythonExecutable);
@@ -240,9 +266,9 @@ bool RVCProcessor::executeRVCCommand(const juce::String& command)
     return exitCode == 0 && outputFile.exists();
 }
 
-void RVCProcessor::setModelPath(const juce::String& modelPath)
+void RVCProcessor::setModelPath(const juce::String& newModelPath)
 {
-    this->modelPath = modelPath;
+    this->modelPath = newModelPath;
 }
 
 void RVCProcessor::setF0Method(const juce::String& method)
@@ -255,9 +281,9 @@ void RVCProcessor::setPitchShift(float semitones)
     this->pitchShift = semitones;
 }
 
-void RVCProcessor::setQuality(int quality)
+void RVCProcessor::setQuality(int newQuality)
 {
-    this->quality = quality;
+    this->quality = newQuality;
 }
 
 void RVCProcessor::updateProgress(double progress, const juce::String& message)

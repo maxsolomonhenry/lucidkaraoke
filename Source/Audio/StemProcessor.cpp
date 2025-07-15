@@ -1,10 +1,10 @@
 #include "StemProcessor.h"
 #include "RVCProcessor.h"
 
-StemProcessor::StemProcessor(const juce::File& inputFile, const juce::File& outputDirectory)
+StemProcessor::StemProcessor(const juce::File& initialInputFile, const juce::File& initialOutputDirectory)
     : Thread("StemProcessor"),
-      inputFile(inputFile),
-      outputDirectory(outputDirectory)
+      inputFile(initialInputFile),
+      outputDirectory(initialOutputDirectory)
 {
     updateProgress(0.0, "Initializing DeMucs...");
 }
@@ -106,7 +106,21 @@ bool StemProcessor::checkDeMucsAvailability()
     juce::ChildProcess process;
     
     // Test the virtual environment's DeMucs directly
-    juce::String testCommand = "/Users/maxhenry/Documents/cpp/lucidkaraoke/demucs_env/bin/python3 -m demucs --help";
+    juce::File currentDir = juce::File::getSpecialLocation(juce::File::currentExecutableFile).getParentDirectory();
+    juce::File venvPython = currentDir.getChildFile("../demucs_env/bin/python3");
+    
+    if (!venvPython.exists())
+    {
+        // Try relative to working directory
+        venvPython = juce::File::getCurrentWorkingDirectory().getChildFile("demucs_env/bin/python3");
+    }
+    
+    if (!venvPython.exists())
+    {
+        return false;
+    }
+    
+    juce::String testCommand = venvPython.getFullPathName() + " -m demucs --help";
     
     if (process.start(testCommand))
     {
@@ -119,11 +133,22 @@ bool StemProcessor::checkDeMucsAvailability()
 
 juce::String StemProcessor::buildDeMucsCommand()
 {
-    juce::String pythonExecutable = "/Users/maxhenry/Documents/cpp/lucidkaraoke/demucs_env/bin/python3";
-    juce::String demucsScript = "/Users/maxhenry/Documents/cpp/lucidkaraoke/demucs_env/bin/demucs";
+    // Find the virtual environment relative to the executable or working directory
+    juce::File currentDir = juce::File::getSpecialLocation(juce::File::currentExecutableFile).getParentDirectory();
+    juce::File venvPython = currentDir.getChildFile("../demucs_env/bin/python3");
+    
+    if (!venvPython.exists())
+    {
+        // Try relative to working directory
+        venvPython = juce::File::getCurrentWorkingDirectory().getChildFile("demucs_env/bin/python3");
+    }
+    
+    juce::String pythonExecutable = venvPython.getFullPathName();
     
     juce::StringArray args;
-    args.add(demucsScript);
+    args.add(pythonExecutable);
+    args.add("-m");
+    args.add("demucs");
     args.add("--mp3");
     args.add("--mp3-bitrate");
     args.add("320");
@@ -133,10 +158,7 @@ juce::String StemProcessor::buildDeMucsCommand()
     args.add(outputDirectory.getFullPathName());
     args.add(inputFile.getFullPathName());
     
-    juce::String command;
-    command << pythonExecutable << " " << args.joinIntoString(" ");
-    
-    return command;
+    return args.joinIntoString(" ");
 }
 
 bool StemProcessor::executeDeMucsCommand(const juce::String& command)
@@ -232,9 +254,7 @@ bool StemProcessor::executeDeMucsCommand(const juce::String& command)
         // Pass the output to the completion callback for better error reporting
         if (onProcessingComplete)
         {
-            if (exitCode == 0)
-                onProcessingComplete(true, "Stems have been successfully separated!");
-            else
+            if (exitCode != 0)
             {
                 juce::String errorMsg = "DeMucs failed with exit code " + juce::String(exitCode) + ":\n\n";
                 errorMsg += processOutput;
@@ -350,7 +370,16 @@ bool StemProcessor::processVocalWithRVC()
     
     // Create a simple RVC command using our Python script
     // For now, we'll apply a basic pitch shift as demonstration
-    juce::String pythonExecutable = "/Users/maxhenry/Documents/cpp/lucidkaraoke/demucs_env/bin/python3";
+    juce::File currentDir = juce::File::getSpecialLocation(juce::File::currentExecutableFile).getParentDirectory();
+    juce::File venvPython = currentDir.getChildFile("../demucs_env/bin/python3");
+    
+    if (!venvPython.exists())
+    {
+        // Try relative to working directory
+        venvPython = juce::File::getCurrentWorkingDirectory().getChildFile("demucs_env/bin/python3");
+    }
+    
+    juce::String pythonExecutable = venvPython.getFullPathName();
     juce::String rvcScript = "/Users/maxhenry/Documents/cpp/lucidkaraoke/rvc_simple_inference.py";
     
     juce::StringArray args;
