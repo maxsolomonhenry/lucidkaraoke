@@ -105,15 +105,8 @@ bool StemProcessor::checkDeMucsAvailability()
 {
     juce::ChildProcess process;
     
-    // Test the virtual environment's DeMucs directly
-    juce::File currentDir = juce::File::getSpecialLocation(juce::File::currentExecutableFile).getParentDirectory();
-    juce::File venvPython = currentDir.getChildFile("../demucs_env/bin/python3");
-    
-    if (!venvPython.exists())
-    {
-        // Try relative to working directory
-        venvPython = juce::File::getCurrentWorkingDirectory().getChildFile("demucs_env/bin/python3");
-    }
+    // Find the virtual environment's Python executable
+    juce::File venvPython = findVirtualEnvironmentPython();
     
     if (!venvPython.exists())
     {
@@ -133,16 +126,8 @@ bool StemProcessor::checkDeMucsAvailability()
 
 juce::String StemProcessor::buildDeMucsCommand()
 {
-    // Find the virtual environment relative to the executable or working directory
-    juce::File currentDir = juce::File::getSpecialLocation(juce::File::currentExecutableFile).getParentDirectory();
-    juce::File venvPython = currentDir.getChildFile("../demucs_env/bin/python3");
-    
-    if (!venvPython.exists())
-    {
-        // Try relative to working directory
-        venvPython = juce::File::getCurrentWorkingDirectory().getChildFile("demucs_env/bin/python3");
-    }
-    
+    // Find the virtual environment Python executable
+    juce::File venvPython = findVirtualEnvironmentPython();
     juce::String pythonExecutable = venvPython.getFullPathName();
     
     juce::StringArray args;
@@ -370,17 +355,12 @@ bool StemProcessor::processVocalWithRVC()
     
     // Create a simple RVC command using our Python script
     // For now, we'll apply a basic pitch shift as demonstration
-    juce::File currentDir = juce::File::getSpecialLocation(juce::File::currentExecutableFile).getParentDirectory();
-    juce::File venvPython = currentDir.getChildFile("../demucs_env/bin/python3");
-    
-    if (!venvPython.exists())
-    {
-        // Try relative to working directory
-        venvPython = juce::File::getCurrentWorkingDirectory().getChildFile("demucs_env/bin/python3");
-    }
-    
+    juce::File venvPython = findVirtualEnvironmentPython();
     juce::String pythonExecutable = venvPython.getFullPathName();
-    juce::String rvcScript = "/Users/maxhenry/Documents/cpp/lucidkaraoke/rvc_simple_inference.py";
+    
+    // Find the RVC script relative to the project root
+    juce::File rvcScriptFile = findProjectRoot().getChildFile("rvc_simple_inference.py");
+    juce::String rvcScript = rvcScriptFile.getFullPathName();
     
     juce::StringArray args;
     args.add(pythonExecutable);
@@ -514,4 +494,85 @@ void StemProcessor::updateProgress(double progress, const juce::String& message)
             onProgressUpdate(progress, message);
         });
     }
+}
+
+juce::File StemProcessor::findVirtualEnvironmentPython()
+{
+    // Try multiple possible locations for the virtual environment
+    
+    // 1. Try relative to the executable directory (for deployed applications)
+    juce::File executableDir = juce::File::getSpecialLocation(juce::File::currentExecutableFile).getParentDirectory();
+    juce::File venvPython = executableDir.getChildFile("../demucs_env/bin/python3");
+    
+    if (venvPython.exists())
+    {
+        return venvPython;
+    }
+    
+    // 2. Try relative to the executable directory (alternative path for deployment)
+    venvPython = executableDir.getChildFile("demucs_env/bin/python3");
+    
+    if (venvPython.exists())
+    {
+        return venvPython;
+    }
+    
+    // 3. Try relative to the current working directory (for development)
+    venvPython = juce::File::getCurrentWorkingDirectory().getChildFile("demucs_env/bin/python3");
+    
+    if (venvPython.exists())
+    {
+        return venvPython;
+    }
+    
+    // 4. Try relative to the project root (for development)
+    juce::File projectRoot = findProjectRoot();
+    venvPython = projectRoot.getChildFile("demucs_env/bin/python3");
+    
+    if (venvPython.exists())
+    {
+        return venvPython;
+    }
+    
+    // Return empty file if not found
+    return juce::File();
+}
+
+juce::File StemProcessor::findProjectRoot()
+{
+    // Start from the executable directory and work upwards to find the project root
+    juce::File currentDir = juce::File::getSpecialLocation(juce::File::currentExecutableFile).getParentDirectory();
+    
+    // Look for markers that indicate the project root
+    while (currentDir.exists() && currentDir != currentDir.getParentDirectory())
+    {
+        // Check for common project root markers
+        if (currentDir.getChildFile("CMakeLists.txt").exists() ||
+            currentDir.getChildFile("setup_demucs_env.sh").exists() ||
+            currentDir.getChildFile("CLAUDE.md").exists())
+        {
+            return currentDir;
+        }
+        
+        currentDir = currentDir.getParentDirectory();
+    }
+    
+    // If not found relative to executable, try current working directory
+    currentDir = juce::File::getCurrentWorkingDirectory();
+    
+    while (currentDir.exists() && currentDir != currentDir.getParentDirectory())
+    {
+        // Check for common project root markers
+        if (currentDir.getChildFile("CMakeLists.txt").exists() ||
+            currentDir.getChildFile("setup_demucs_env.sh").exists() ||
+            currentDir.getChildFile("CLAUDE.md").exists())
+        {
+            return currentDir;
+        }
+        
+        currentDir = currentDir.getParentDirectory();
+    }
+    
+    // Fallback to current working directory
+    return juce::File::getCurrentWorkingDirectory();
 }

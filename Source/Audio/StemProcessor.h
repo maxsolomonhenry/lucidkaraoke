@@ -27,5 +27,9 @@ private:
     
     void updateProgress(double progress, const juce::String& message);
     
+    // Helper methods for path resolution
+    juce::File findVirtualEnvironmentPython();
+    juce::File findProjectRoot();
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StemProcessor)
 };
