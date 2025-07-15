@@ -36,6 +36,11 @@ public:
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 
 private:
+    enum class PlaybackMode
+    {
+        Normal,
+        MixedFilePlayback
+    };
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     LucidkaraokeAudioProcessor& audioProcessor;
@@ -48,6 +53,7 @@ private:
     std::unique_ptr<StemProgressBar> progressBar;
     
     void loadFile(const juce::File& file);
+    void loadMixedFile(const juce::File& file);
     void updateWaveformPosition();
     void splitAudioStems(const juce::File& inputFile);
     void handleCompleteRecording();
@@ -57,6 +63,7 @@ private:
     juce::File currentStemOutputDir;
     juce::File currentInputFile;
     bool stemProcessingInProgress;
+    PlaybackMode currentPlaybackMode;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LucidkaraokeAudioProcessorEditor)
 };

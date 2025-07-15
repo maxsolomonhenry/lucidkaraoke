@@ -375,6 +375,9 @@ void LucidkaraokeAudioProcessor::changeState(TransportState newState)
 // Recording functionality
 void LucidkaraokeAudioProcessor::startRecording()
 {
+    if (!recordingEnabled)
+        return;
+        
     stopRecording(); // Stop any existing recording
 
     // Create a unique filename in temp directory

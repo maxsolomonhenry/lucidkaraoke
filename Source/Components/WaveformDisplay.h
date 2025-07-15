@@ -21,6 +21,14 @@ public:
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
     void timerCallback() override;
     
+    enum class DisplayMode
+    {
+        Normal,
+        MixedFile
+    };
+    
+    void setDisplayMode(DisplayMode mode);
+    
     std::function<void(double)> onPositionChanged;
     
 private:
@@ -31,6 +39,7 @@ private:
     bool fileLoaded;
     double position;
     bool isDragging;
+    DisplayMode displayMode;
     
     void paintIfNoFileLoaded(juce::Graphics& g);
     void paintIfFileLoaded(juce::Graphics& g);

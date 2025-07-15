@@ -6,7 +6,8 @@ WaveformDisplay::WaveformDisplay()
       audioThumbnail(1000, formatManager, thumbnailCache),
       fileLoaded(false),
       position(0.0),
-      isDragging(false)
+      isDragging(false),
+      displayMode(DisplayMode::Normal)
 {
     formatManager.registerBasicFormats();
     audioThumbnail.addChangeListener(this);
@@ -98,6 +99,12 @@ void WaveformDisplay::loadURL(const juce::URL& url)
     repaint();
 }
 
+void WaveformDisplay::setDisplayMode(DisplayMode mode)
+{
+    displayMode = mode;
+    repaint();
+}
+
 void WaveformDisplay::setPositionRelative(double newPosition)
 {
     if (!isDragging && std::abs(position - newPosition) > 0.001)
@@ -130,10 +137,21 @@ void WaveformDisplay::paintIfFileLoaded(juce::Graphics& g)
     auto bounds = getLocalBounds();
     auto waveformBounds = bounds.reduced(4);
     
-    g.setColour(juce::Colour(0xff4dabf7).withAlpha(0.8f));
+    // Choose color based on display mode
+    juce::Colour waveformColor;
+    if (displayMode == DisplayMode::MixedFile)
+    {
+        waveformColor = juce::Colour(0xff4caf50); // Green for mixed files
+    }
+    else
+    {
+        waveformColor = juce::Colour(0xff4dabf7); // Blue for normal files
+    }
+    
+    g.setColour(waveformColor.withAlpha(0.8f));
     audioThumbnail.drawChannels(g, waveformBounds, 0.0, audioThumbnail.getTotalLength(), 1.0f);
     
-    g.setColour(juce::Colour(0xff4dabf7).withAlpha(0.3f));
+    g.setColour(waveformColor.withAlpha(0.3f));
     g.fillRect(waveformBounds.getX(), waveformBounds.getY(), 
                static_cast<int>(waveformBounds.getWidth() * position), waveformBounds.getHeight());
 }

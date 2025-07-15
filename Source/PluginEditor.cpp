@@ -11,7 +11,7 @@
 
 //==============================================================================
 LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (LucidkaraokeAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p), stemProcessingInProgress(false)
+    : AudioProcessorEditor (&p), audioProcessor (p), stemProcessingInProgress(false), currentPlaybackMode(PlaybackMode::Normal)
 {
     setLookAndFeel(&darkTheme);
 
@@ -134,14 +134,34 @@ void LucidkaraokeAudioProcessorEditor::loadFile(const juce::File& file)
 {
     audioProcessor.loadFile(file);
     waveformDisplay->loadURL(juce::URL(file));
+    waveformDisplay->setDisplayMode(WaveformDisplay::DisplayMode::Normal);
+    
+    // Reset to normal playback mode
+    currentPlaybackMode = PlaybackMode::Normal;
+    audioProcessor.setRecordingEnabled(true);
     
     // Track current input file for vocal mixing later
     currentInputFile = file;
     
     // Magic: automatically start stem processing in background
     progressBar->reset();
-    progressBar->setStatusText("Preparing to split stems...");
+    progressBar->setStatusText("Preparing to split stems... (put on headphones!)");
     splitAudioStems(file);
+}
+
+void LucidkaraokeAudioProcessorEditor::loadMixedFile(const juce::File& file)
+{
+    audioProcessor.loadFile(file);
+    waveformDisplay->loadURL(juce::URL(file));
+    waveformDisplay->setDisplayMode(WaveformDisplay::DisplayMode::MixedFile);
+    
+    // Set to mixed file playback mode
+    currentPlaybackMode = PlaybackMode::MixedFilePlayback;
+    audioProcessor.setRecordingEnabled(false);
+    
+    // Update progress bar
+    progressBar->setComplete(true);
+    progressBar->setStatusText("Mixed file ready - play to listen!");
 }
 
 void LucidkaraokeAudioProcessorEditor::updateWaveformPosition()
@@ -184,7 +204,7 @@ void LucidkaraokeAudioProcessorEditor::splitAudioStems(const juce::File& inputFi
             if (success)
             {
                 progressBar->setComplete(true);
-                progressBar->setStatusText("Stems ready - you can now play!");
+                progressBar->setStatusText("Stems ready - put on headphones and play!");
                 
                 // Check if we have a completed recording waiting for the karaoke track
                 if (!audioProcessor.isRecording() && audioProcessor.isCompleteRecording())
@@ -269,24 +289,8 @@ void LucidkaraokeAudioProcessorEditor::mixVocalsWithKaraoke(const juce::File& re
         juce::MessageManager::callAsync([this, success, message, outputFile]() {
             if (success)
             {
-                progressBar->setComplete(true);
-                progressBar->setStatusText("Vocal mixing complete!");
-                
-                // Show success message with option to reveal file
-                juce::AlertWindow::showOkCancelBox(
-                    juce::AlertWindow::InfoIcon,
-                    "Vocal Mixing Complete!",
-                    message + "\n\nWould you like to reveal the file in Finder?",
-                    "Reveal File",
-                    "OK",
-                    nullptr,
-                    juce::ModalCallbackFunction::create([outputFile](int result) {
-                        if (result == 1) // User clicked "Reveal File"
-                        {
-                            outputFile.revealToUser();
-                        }
-                    })
-                );
+                // Automatically load the mixed file for playback
+                loadMixedFile(outputFile);
             }
             else
             {
