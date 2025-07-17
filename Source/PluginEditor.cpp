@@ -315,14 +315,6 @@ void LucidkaraokeAudioProcessorEditor::handleCompleteRecording()
         // Set progress bar to orange waiting state
         progressBar->setWaitingState(true);
         progressBar->setStatusText("Waiting on stem separation...");
-        
-        juce::AlertWindow::showMessageBoxAsync(
-            juce::AlertWindow::InfoIcon,
-            "Recording Complete",
-            "Your recording is complete!\n\n"
-            "However, the karaoke track is not ready yet. Please wait for stem processing to complete, "
-            "then your vocals will be automatically mixed with the karaoke track."
-        );
         return;
     }
     
