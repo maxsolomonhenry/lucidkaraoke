@@ -29,6 +29,8 @@ WORKDIR /app
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
+# Install PyTorch with CUDA support first, then other dependencies
+RUN pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cu118
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Pre-download DeMucs model weights to avoid cold start downloads

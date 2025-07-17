@@ -1,7 +1,6 @@
 # Core dependencies for DeMucs stem separation service
+# Note: torch and torchaudio are installed separately in Dockerfile with CUDA support
 demucs>=4.0.0
-torch>=2.0.0
-torchaudio>=2.0.0
 
 # Audio processing libraries
 librosa>=0.10.0
