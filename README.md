@@ -1,6 +1,6 @@
 # AI-Driven Product Ownership: A Thought Experiment
 
-The idea of accelerating audio product development with AI has stuck in my mind since our interview. It's an fascinating puzzle with huge potential gains and challenging sub-problems.
+The idea of accelerating audio product development with AI has stuck in my mind since our discussion. It's an fascinating puzzle with huge potential gains and challenging sub-problems.
 
 I've prepared a few thoughts below on how I might approach this problem.
 
@@ -35,7 +35,7 @@ Shifting to AI-Driven Product represents an important significant transition, an
 
 ![alt text](figs/workflow.png)
 
-The workflow can be considered in two phases: (1) an "incubation period" leveraging LLMs and brainstorming to drive _microsprints_ (2-3 days) rendering a fully-functional, feature complete MVP and a Product Requirements Document (PRD); and (2) building the product to scale, incorporating with LANDR platform, etc. through traditional two-week sprints.
+The workflow can be considered in two phases: (1) an "incubation period" leveraging LLMs and brainstorming to drive _microsprints_ (2-3 days) rendering a fully-functional, feature complete MVP and a Product Requirements Document (PRD); and (2) building the product to scale, incorporating with broader platform, etc. through traditional two-week sprints.
 
 1. __Product Hypothesis__: PO works with Product Manager (PM) to establish first hypothesis on the product; what is the market need, who are the target users, and what is the proposed value. 
     * __Output__: PO develops user personas (e.g., _amateur musician_) and use-case scenarios. Early product UI sketches.
