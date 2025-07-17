@@ -102,6 +102,7 @@ The project now includes a containerized DeMucs service for stem separation:
 - **Integration**: `HttpStemProcessor` and `DockerManager` classes provide C++ integration
 - **GPU Support**: Automatic CUDA detection with CPU fallback
 - **Cloud Ready**: Compatible with Google Cloud Functions/Cloud Run
+- **URL Configuration**: Service requires URL configuration to connect to remote cloud service for DeMucs processing and future voice cloning capabilities
 
 ### Docker Commands
 ```bash

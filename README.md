@@ -139,9 +139,10 @@ cmake --build . --target lucidkaraoke_AU            # Audio Unit plugin
 - Local stem separation capability
 - File I/O and waveform visualization
 
-### Phase 2: Cloud Integration 
+### Phase 2: Cloud Integration (In Progress)
 - Migrate processing to cloud infrastructure
 - API-based voice conversion pipeline
+- **Service URL Configuration**: Cloud service requires URL configuration for connecting to remote DeMucs processing and future voice cloning services
 
 ### Phase 3: User Experience 
 - Streamlined workflow design
