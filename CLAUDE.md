@@ -85,8 +85,35 @@ The AudioProcessor maintains three states: Stopped, Playing, Paused. State chang
 - Stem processing output organized in separate directories per track
 
 ### Cross-Platform Compatibility
-- **Shell Scripts**: Use Unix line endings (LF) for macOS/Linux compatibility. If creating shell scripts on Windows or if line ending issues occur, fix with:
+- **Shell Scripts**: ALWAYS use Unix line endings (LF) for macOS/Linux compatibility. When creating new shell scripts (.sh files), ensure they use LF line endings to prevent "bad interpreter" errors. If line ending issues occur, fix with:
   ```bash
   sed -i '' 's/\r$//' script_name.sh
   ```
+  **IMPORTANT**: All shell scripts must be created with LF line endings from the start. Use your editor's line ending settings or run the sed command immediately after creating any .sh file.
 - **Python Environment**: Code uses relative paths to find `demucs_env/` virtual environment, checking both executable-relative (`../demucs_env/`) and working directory-relative (`demucs_env/`) locations
+
+## Docker Integration
+
+### DeMucs Docker Service
+The project now includes a containerized DeMucs service for stem separation:
+
+- **Location**: `docker/` directory contains all Docker-related files
+- **Service**: FastAPI HTTP service running DeMucs with pre-downloaded model weights
+- **Integration**: `HttpStemProcessor` and `DockerManager` classes provide C++ integration
+- **GPU Support**: Automatic CUDA detection with CPU fallback
+- **Cloud Ready**: Compatible with Google Cloud Functions/Cloud Run
+
+### Docker Commands
+```bash
+# Build the container
+cd docker && ./build.sh
+
+# Start CPU-only service
+docker compose --profile cpu up -d
+
+# Start GPU service (requires NVIDIA Docker)
+docker compose --profile gpu up -d
+
+# Test the service
+./test_service.sh
+```

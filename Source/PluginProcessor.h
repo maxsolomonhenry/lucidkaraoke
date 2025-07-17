@@ -149,6 +149,9 @@ private:
     
     // Control recording availability
     bool recordingEnabled = true;
+
+    // File logger
+    std::unique_ptr<juce::FileLogger> fileLogger;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LucidkaraokeAudioProcessor)
 };

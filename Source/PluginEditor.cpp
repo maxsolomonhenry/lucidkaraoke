@@ -218,7 +218,7 @@ void LucidkaraokeAudioProcessorEditor::splitAudioStems(const juce::File& inputFi
     stemProcessingInProgress = true;
     
     // Create and start the stem processor
-    auto* processor = new StemProcessor(inputFile, tempDir);
+    auto* processor = new HttpStemProcessor(inputFile, tempDir);
     
     // Wire up progress updates to the progress bar
     processor->onProgressUpdate = [this](double progress, const juce::String& statusMessage) {
@@ -277,10 +277,7 @@ void LucidkaraokeAudioProcessorEditor::handleCompleteRecording()
     }
     
     // Build the expected karaoke file path
-    juce::String inputFileName = currentInputFile.getFileNameWithoutExtension();
-    juce::File karaokeFile = currentStemOutputDir.getChildFile("htdemucs_ft")
-                                                  .getChildFile(inputFileName)
-                                                  .getChildFile("karaoke.mp3");
+    juce::File karaokeFile = currentStemOutputDir.getChildFile("karaoke.mp3");
     
     if (!karaokeFile.exists())
     {

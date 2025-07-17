@@ -23,6 +23,12 @@ LucidkaraokeAudioProcessor::LucidkaraokeAudioProcessor()
 #endif
       state(Stopped)
 {
+    // Set up file logger
+    auto logFile = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+        .getParentDirectory().getChildFile("lucidkaraoke_debug.log");
+    fileLogger = std::make_unique<juce::FileLogger>(logFile, "Lucid Karaoke Log", 10 * 1024 * 1024); // 10 MB max log size
+    juce::Logger::setCurrentLogger(fileLogger.get());
+
     formatManager.registerBasicFormats();
     transportSource.addChangeListener(this);
 

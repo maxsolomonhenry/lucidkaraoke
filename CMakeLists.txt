@@ -51,8 +51,8 @@ target_sources(lucidkaraoke
         Source/Components/RecordButton.h
         Source/Components/SourceToggleButton.cpp
         Source/Components/SourceToggleButton.h
-        Source/Audio/StemProcessor.cpp
-        Source/Audio/StemProcessor.h
+        Source/Audio/HttpStemProcessor.cpp
+        Source/Audio/HttpStemProcessor.h
         Source/Audio/VocalMixer.cpp
         Source/Audio/VocalMixer.h
         Source/Audio/RVCProcessor.cpp

@@ -16,7 +16,7 @@
 #include "Components/LoadButton.h"
 #include "Components/ProgressBar.h"
 #include "Components/SourceToggleButton.h"
-#include "Audio/StemProcessor.h"
+#include "Audio/HttpStemProcessor.h"
 #include "Audio/VocalMixer.h"
 
 //==============================================================================
