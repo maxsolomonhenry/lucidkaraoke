@@ -15,6 +15,7 @@ public:
     
     void setProgress(double progress);
     void setComplete(bool complete);
+    void setWaitingState(bool waiting);
     void reset();
     void setStatusText(const juce::String& text);
     
@@ -23,6 +24,7 @@ public:
 private:
     double currentProgress;
     bool isCompleted;
+    bool isWaiting;
     float glowIntensity;
     float breathingPhase;
     juce::String statusText;

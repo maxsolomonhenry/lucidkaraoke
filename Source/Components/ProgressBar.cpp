@@ -3,6 +3,7 @@
 StemProgressBar::StemProgressBar()
     : currentProgress(0.0),
       isCompleted(false),
+      isWaiting(false),
       glowIntensity(0.0f),
       breathingPhase(0.0f),
       statusText("")
@@ -50,6 +51,27 @@ void StemProgressBar::paint(juce::Graphics& g)
         
         // Inner fill
         g.setColour(juce::Colour(0xff4caf50));
+        g.fillRoundedRectangle(progressBounds, height * 0.5f);
+    }
+    else if (isWaiting)
+    {
+        // Orange pulsating effect when waiting for stems
+        float breathingValue = std::sin(breathingPhase); // Varies from -1.0 to 1.0
+        auto waitingColour = juce::Colour(0xffff9800); // Orange color
+        juce::Colour pulsatingColour;
+
+        if (breathingValue >= 0.0f)
+        {
+            // Interpolate from base to light
+            pulsatingColour = waitingColour.interpolatedWith(waitingColour.brighter(0.4f), breathingValue);
+        }
+        else
+        {
+            // Interpolate from base to dark
+            pulsatingColour = waitingColour.interpolatedWith(waitingColour.darker(0.4f), -breathingValue);
+        }
+        
+        g.setColour(pulsatingColour);
         g.fillRoundedRectangle(progressBounds, height * 0.5f);
     }
     else if (currentProgress > 0.0)
@@ -117,7 +139,19 @@ void StemProgressBar::setComplete(bool complete)
     if (complete)
     {
         currentProgress = 1.0;
+        isWaiting = false;
         glowIntensity = 0.0f;
+    }
+    repaint();
+}
+
+void StemProgressBar::setWaitingState(bool waiting)
+{
+    isWaiting = waiting;
+    if (waiting)
+    {
+        currentProgress = 1.0;
+        isCompleted = false;
     }
     repaint();
 }
@@ -126,6 +160,7 @@ void StemProgressBar::reset()
 {
     currentProgress = 0.0;
     isCompleted = false;
+    isWaiting = false;
     glowIntensity = 0.0f;
     breathingPhase = 0.0f;
     statusText = "";

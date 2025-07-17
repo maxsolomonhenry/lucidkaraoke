@@ -157,7 +157,7 @@ void LucidkaraokeAudioProcessorEditor::timerCallback()
     bool isPlaying = audioProcessor.isPlaying();
     bool isPaused = audioProcessor.isPaused();
     
-    transportControls->setPlayButtonEnabled(hasFile && !isPlaying && !stemProcessingInProgress);
+    transportControls->setPlayButtonEnabled(hasFile && !isPlaying);
     transportControls->setPauseButtonEnabled(hasFile && (isPlaying || isPaused));
     transportControls->setStopButtonEnabled(hasFile && (isPlaying || isPaused));
     
@@ -201,7 +201,7 @@ void LucidkaraokeAudioProcessorEditor::loadFile(const juce::File& file)
     
     // Magic: automatically start stem processing in background
     progressBar->reset();
-    progressBar->setStatusText("Preparing to split stems... (put on headphones!)");
+    progressBar->setStatusText("Separating audio stems...");
     splitAudioStems(file);
 }
 
@@ -222,7 +222,7 @@ void LucidkaraokeAudioProcessorEditor::loadMixedFile(const juce::File& file)
     
     // Update progress bar
     progressBar->setComplete(true);
-    progressBar->setStatusText("Mixed file ready - play to listen!");
+    progressBar->setStatusText("Processing complete - Ready to play");
 }
 
 void LucidkaraokeAudioProcessorEditor::updateWaveformPosition()
@@ -265,7 +265,7 @@ void LucidkaraokeAudioProcessorEditor::splitAudioStems(const juce::File& inputFi
             if (success)
             {
                 progressBar->setComplete(true);
-                progressBar->setStatusText("Stems ready - put on headphones and play!");
+                progressBar->setStatusText("Processing complete - Ready to play");
                 
                 // Check if we have a completed recording waiting for the karaoke track
                 if (!audioProcessor.isRecording() && audioProcessor.isCompleteRecording())
@@ -312,6 +312,10 @@ void LucidkaraokeAudioProcessorEditor::handleCompleteRecording()
     
     if (!karaokeFile.exists())
     {
+        // Set progress bar to orange waiting state
+        progressBar->setWaitingState(true);
+        progressBar->setStatusText("Waiting on stem separation...");
+        
         juce::AlertWindow::showMessageBoxAsync(
             juce::AlertWindow::InfoIcon,
             "Recording Complete",
