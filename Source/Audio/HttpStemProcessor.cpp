@@ -1,27 +1,17 @@
 #include "HttpStemProcessor.h"
 #include "RVCProcessor.h"
 
-HttpStemProcessor::HttpStemProcessor(const juce::File& initialInputFile, const juce::File& initialOutputDirectory)
+HttpStemProcessor::HttpStemProcessor(const juce::File& initialInputFile, const juce::File& initialOutputDirectory, const juce::String& url)
     : Thread("HttpStemProcessor"),
       inputFile(initialInputFile),
       outputDirectory(initialOutputDirectory),
-      serviceUrl("http://localhost:8000")
+      serviceUrl(url)
 {
     updateProgress(0.0, "Initializing stem processor...");
 }
 
 HttpStemProcessor::~HttpStemProcessor()
 {
-}
-
-void HttpStemProcessor::setServiceUrl(const juce::String& url)
-{
-    serviceUrl = url;
-}
-
-void HttpStemProcessor::setServicePort(int port)
-{
-    serviceUrl = "http://localhost:" + juce::String(port);
 }
 
 void HttpStemProcessor::run()

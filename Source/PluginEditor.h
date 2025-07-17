@@ -69,6 +69,9 @@ private:
     bool stemProcessingInProgress;
     PlaybackMode currentPlaybackMode;
     bool canToggleBetweenSources;
+    
+    juce::String serviceUrl;
+    void promptForServiceUrl();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LucidkaraokeAudioProcessorEditor)
 };

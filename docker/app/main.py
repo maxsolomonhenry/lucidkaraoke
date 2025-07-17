@@ -17,6 +17,19 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
+def is_gpu_available() -> bool:
+    """Check if CUDA GPU is available for DeMucs"""
+    try:
+        import torch
+        return torch.cuda.is_available()
+    except ImportError:
+        # Fallback: check nvidia-smi command
+        try:
+            result = subprocess.run(["nvidia-smi"], capture_output=True, timeout=5)
+            return result.returncode == 0
+        except:
+            return False
+
 app = FastAPI(
     title="DeMucs Stem Separation Service",
     description="HTTP API for AI-powered audio stem separation using DeMucs CLI",
@@ -46,6 +59,7 @@ async def health_check():
     return {
         "status": "healthy" if demucs_available else "unhealthy",
         "demucs_available": demucs_available,
+        "gpu_available": is_gpu_available(),
         "model": "htdemucs_ft"
     }
 
@@ -102,9 +116,14 @@ async def separate_stems(
             "--mp3",
             "--mp3-bitrate", str(bitrate),
             "-n", model,
-            "-o", str(output_dir),
-            str(input_path)
+            "-o", str(output_dir)
         ]
+        
+        # Add GPU support if available
+        if is_gpu_available():
+            cmd.extend(["--device", "cuda"])
+        
+        cmd.append(str(input_path))
         
         # Run the command
         result = subprocess.run(

@@ -20,6 +20,7 @@ LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (Lucidkaraoke
         loadFile(file);
     };
     addAndMakeVisible(loadButton.get());
+    loadButton->setEnabled(false); // Disable until service URL is configured
 
 
     waveformDisplay = std::make_unique<WaveformDisplay>();
@@ -57,6 +58,36 @@ LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (Lucidkaraoke
     
     // Listen for recording state changes from the processor
     audioProcessor.addChangeListener(this);
+
+    promptForServiceUrl();
+}
+
+void LucidkaraokeAudioProcessorEditor::promptForServiceUrl()
+{
+    auto* w = new juce::AlertWindow ("Configure Cloud Processing Service",
+                         "Please enter the URL for the cloud processing service. This is used for features like stem separation and other heavy processing tasks.",
+                         juce::AlertWindow::NoIcon);
+
+    w->addTextEditor ("serviceUrl", "http://localhost:8000", "Service URL:");
+
+    w->addButton ("OK", 1, juce::KeyPress (juce::KeyPress::returnKey, 0, 0));
+    w->addButton ("Cancel", 0, juce::KeyPress (juce::KeyPress::escapeKey, 0, 0));
+
+    w->enterModalState (true, juce::ModalCallbackFunction::create ([this, w] (int modalResult)
+    {
+        if (modalResult == 1) // OK button clicked
+        {
+            serviceUrl = w->getTextEditorContents("serviceUrl");
+        }
+        else
+        {
+            // User cancelled, fall back to default
+            serviceUrl = "http://localhost:8000";
+        }
+
+        loadButton->setEnabled(true);
+        delete w;
+    }));
 }
 
 LucidkaraokeAudioProcessorEditor::~LucidkaraokeAudioProcessorEditor()
@@ -218,7 +249,7 @@ void LucidkaraokeAudioProcessorEditor::splitAudioStems(const juce::File& inputFi
     stemProcessingInProgress = true;
     
     // Create and start the stem processor
-    auto* processor = new HttpStemProcessor(inputFile, tempDir);
+    auto* processor = new HttpStemProcessor(inputFile, tempDir, serviceUrl);
     
     // Wire up progress updates to the progress bar
     processor->onProgressUpdate = [this](double progress, const juce::String& statusMessage) {

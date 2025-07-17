@@ -9,14 +9,10 @@
 class HttpStemProcessor : public juce::Thread
 {
 public:
-    HttpStemProcessor(const juce::File& inputFile, const juce::File& outputDirectory);
+    HttpStemProcessor(const juce::File& inputFile, const juce::File& outputDirectory, const juce::String& serviceUrl);
     ~HttpStemProcessor() override;
     
     void run() override;
-    
-    // Configuration
-    void setServiceUrl(const juce::String& url);
-    void setServicePort(int port);
     
     // Callbacks - same interface as original StemProcessor
     std::function<void(bool success, const juce::String& message)> onProcessingComplete;
