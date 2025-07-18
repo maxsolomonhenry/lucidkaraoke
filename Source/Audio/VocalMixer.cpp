@@ -108,13 +108,14 @@ juce::String VocalMixer::buildMixingCommand()
     args.add("-i"); args.add(karaokeFile.getFullPathName());     // Karaoke track
     
     // Audio filter to mix the two inputs with volume adjustment
-    // Karaoke at 70% volume, vocals at 100% volume
+    // Convert mono vocals to stereo, karaoke at 70% volume, vocals at 100% volume
     args.add("-filter_complex");
-    args.add("[0:a]volume=1.0[vocals];[1:a]volume=0.7[karaoke];[vocals][karaoke]amix=inputs=2:duration=longest:dropout_transition=3,loudnorm=I=-23:LRA=11:TP=-1.5");
+    args.add("[0:a]volume=1.0,pan=stereo|c0=0.5*c0|c1=0.5*c0[vocals_stereo];[1:a]volume=0.7[karaoke];[vocals_stereo][karaoke]amix=inputs=2:duration=longest:dropout_transition=3,loudnorm=I=-23:LRA=11:TP=-1.5");
     
     // Output settings
     args.add("-c:a"); args.add("mp3");
     args.add("-b:a"); args.add("320k");
+    args.add("-ac"); args.add("2"); // Force stereo output
     args.add("-y"); // Overwrite output file if it exists
     
     // Output file
