@@ -150,7 +150,6 @@ void StemProgressBar::setWaitingState(bool waiting)
     isWaiting = waiting;
     if (waiting)
     {
-        currentProgress = 1.0;
         isCompleted = false;
     }
     repaint();

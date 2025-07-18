@@ -359,8 +359,8 @@ void LucidkaraokeAudioProcessorEditor::mixVocalsWithKaraoke(const juce::File& re
         });
     };
     
-    // Reset progress bar and start mixing
-    progressBar->reset();
+    // Set progress bar to orange during mixing (in prep state)
+    progressBar->setWaitingState(true);
     progressBar->setStatusText("Mixing vocals with karaoke...");
     mixer->startThread();
 }
