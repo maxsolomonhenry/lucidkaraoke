@@ -111,6 +111,8 @@ async def separate_stems(
         output_dir.mkdir(exist_ok=True)
         
         # Build DeMucs command
+        gpu_is_available_for_demucs = is_gpu_available()
+        print(f"DEBUG: is_gpu_available() result before command build: {gpu_is_available_for_demucs}")
         cmd = [
             "python", "-m", "demucs",
             "--mp3",
@@ -126,12 +128,15 @@ async def separate_stems(
         cmd.append(str(input_path))
         
         # Run the command
+        print(f"Executing Demucs command: {cmd}") # Added for debugging
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             timeout=300  # 5 minute timeout
         )
+        print(f"Demucs stdout: {result.stdout}") # Added for debugging
+        print(f"Demucs stderr: {result.stderr}") # Added for debugging
         
         if result.returncode != 0:
             raise Exception(f"DeMucs failed: {result.stderr}")
