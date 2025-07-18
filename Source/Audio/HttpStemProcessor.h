@@ -9,7 +9,8 @@
 class HttpStemProcessor : public juce::Thread
 {
 public:
-    HttpStemProcessor(const juce::File& inputFile, const juce::File& outputDirectory, const juce::String& serviceUrl);
+    HttpStemProcessor(const juce::File& inputFile, const juce::File& outputDirectory, const juce::String& serviceUrl,
+                      int maxRetries = 3, int baseDelayMs = 2000, int maxDelayMs = 30000);
     ~HttpStemProcessor() override;
     
     void run() override;
@@ -23,11 +24,22 @@ private:
     juce::File outputDirectory;
     juce::String serviceUrl;
     
+    // Retry configuration
+    int maxRetries;
+    int baseDelayMs;
+    int maxDelayMs;
+    
     // HTTP communication
     bool isServiceAvailable();
     bool sendSeparationRequest();
     bool extractStems(const juce::File& zipFile);
     bool downloadAndExtractStems(const juce::MemoryBlock& zipData);
+    
+    // Retry logic
+    bool isServiceAvailableWithRetry();
+    bool sendSeparationRequestWithRetry();
+    bool isTransientError(int exitCode, const juce::String& output);
+    void waitWithBackoff(int attemptNumber);
     
     // Progress and status
     void updateProgress(double progress, const juce::String& message);

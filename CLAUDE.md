@@ -49,7 +49,7 @@ cmake --build . --target lucidkaraoke_AU            # Audio Unit plugin
 ### Core Components
 - **AudioProcessor** (`Source/PluginProcessor.*`): Main audio processing engine with transport controls
 - **AudioProcessorEditor** (`Source/PluginEditor.*`): Main UI container with dark theme
-- **StemProcessor** (`Source/Audio/StemProcessor.*`): Handles DeMucs integration for stem separation
+- **HttpStemProcessor** (`Source/Audio/HttpStemProcessor.*`): Handles cloud-based stem separation via HTTP API with retry logic
 - **WaveformDisplay** (`Source/Components/WaveformDisplay.*`): Audio visualization with playhead and seeking
 - **TransportControls** (`Source/Components/TransportControls.*`): Play/pause/stop controls
 - **LoadButton** (`Source/Components/LoadButton.*`): File loading interface
@@ -63,8 +63,7 @@ cmake --build . --target lucidkaraoke_AU            # Audio Unit plugin
 - Function callbacks for component communication
 
 ### External Dependencies
-- **DeMucs**: Python-based AI stem separation (called via subprocess)
-- **FFmpeg**: Audio format conversion (required by DeMucs)
+- **Cloud Stem Service**: HTTP-based DeMucs service for AI stem separation
 - **JUCE**: Audio framework for cross-platform plugin development
 
 ## Development Notes
@@ -72,9 +71,10 @@ cmake --build . --target lucidkaraoke_AU            # Audio Unit plugin
 ### Stem Separation Workflow
 1. User loads audio file via LoadButton
 2. WaveformDisplay shows audio thumbnail with playhead
-3. SplitButton triggers StemProcessor in background thread
-4. StemProcessor calls DeMucs via system command
-5. Output stems saved to user-specified directory
+3. SplitButton triggers HttpStemProcessor in background thread
+4. HttpStemProcessor uploads audio to cloud service with automatic retry logic for cold starts
+5. Cloud service processes audio using DeMucs and returns stem files
+6. Output stems downloaded and saved to user-specified directory
 
 ### Audio Transport State
 The AudioProcessor maintains three states: Stopped, Playing, Paused. State changes are broadcast to UI components via ChangeListener pattern.
@@ -99,7 +99,7 @@ The project now includes a containerized DeMucs service for stem separation:
 
 - **Location**: `docker/` directory contains all Docker-related files
 - **Service**: FastAPI HTTP service running DeMucs with pre-downloaded model weights
-- **Integration**: `HttpStemProcessor` and `DockerManager` classes provide C++ integration
+- **Integration**: `HttpStemProcessor` class provides C++ integration with automatic retry logic
 - **GPU Support**: Automatic CUDA detection with CPU fallback
 - **Cloud Ready**: Compatible with Google Cloud Functions/Cloud Run
 - **URL Configuration**: Service requires URL configuration to connect to remote cloud service for DeMucs processing and future voice cloning capabilities

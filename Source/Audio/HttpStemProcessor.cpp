@@ -1,11 +1,15 @@
 #include "HttpStemProcessor.h"
 #include "RVCProcessor.h"
 
-HttpStemProcessor::HttpStemProcessor(const juce::File& initialInputFile, const juce::File& initialOutputDirectory, const juce::String& url)
+HttpStemProcessor::HttpStemProcessor(const juce::File& initialInputFile, const juce::File& initialOutputDirectory, const juce::String& url,
+                                   int retries, int delayMs, int maxDelay)
     : Thread("HttpStemProcessor"),
       inputFile(initialInputFile),
       outputDirectory(initialOutputDirectory),
-      serviceUrl(url)
+      serviceUrl(url),
+      maxRetries(retries),
+      baseDelayMs(delayMs),
+      maxDelayMs(maxDelay)
 {
     updateProgress(0.0, "Initializing stem processor...");
 }
@@ -18,11 +22,11 @@ void HttpStemProcessor::run()
 {
     updateProgress(0.05, "Checking stem separation service...");
     
-    // Check if service is available
-    if (!isServiceAvailable())
+    // Check if service is available with retry
+    if (!isServiceAvailableWithRetry())
     {
         if (onProcessingComplete)
-            onProcessingComplete(false, "Stem separation service is not available. Please start the service and try again.");
+            onProcessingComplete(false, "Stem separation service is not available after multiple attempts. Please check the service and try again.");
         return;
     }
     
@@ -41,11 +45,11 @@ void HttpStemProcessor::run()
     
     updateProgress(0.15, "Sending audio for processing...");
     
-    // Send the separation request
-    if (!sendSeparationRequest())
+    // Send the separation request with retry
+    if (!sendSeparationRequestWithRetry())
     {
         if (onProcessingComplete)
-            onProcessingComplete(false, "Failed to process audio file. Please check that the file format is supported.");
+            onProcessingComplete(false, "Failed to process audio file after multiple attempts. Please check that the file format is supported.");
         return;
     }
     
@@ -332,6 +336,93 @@ bool HttpStemProcessor::generateRVCKaraokeTrack()
     }
     
     return ffmpegProcess.waitForProcessToFinish(30000);
+}
+
+bool HttpStemProcessor::isTransientError(int exitCode, const juce::String& output)
+{
+    // Network-related curl exit codes that might indicate transient issues
+    if (exitCode == 6 || exitCode == 7 || exitCode == 28) // Could not resolve host, couldn't connect, timeout
+        return true;
+    
+    // Check for HTTP 5xx server errors in output (indicating server overload/cold start)
+    if (output.contains("HTTP/1.1 5") || output.contains("HTTP/2 5"))
+        return true;
+    
+    // Check for common transient error messages
+    if (output.containsIgnoreCase("connection refused") ||
+        output.containsIgnoreCase("connection timed out") ||
+        output.containsIgnoreCase("temporarily unavailable") ||
+        output.containsIgnoreCase("service unavailable") ||
+        output.containsIgnoreCase("internal server error"))
+        return true;
+    
+    return false;
+}
+
+void HttpStemProcessor::waitWithBackoff(int attemptNumber)
+{
+    // Exponential backoff with jitter: delay = baseDelay * 2^attempt + random(0, 1000)
+    int delay = baseDelayMs * (1 << attemptNumber); // 2^attemptNumber
+    delay = juce::jmin(delay, maxDelayMs); // Cap at maxDelay
+    
+    // Add jitter (random 0-1000ms) to avoid thundering herd
+    delay += juce::Random::getSystemRandom().nextInt(1000);
+    
+    if (delay > 0)
+    {
+        updateProgress(0.05 + (attemptNumber * 0.02), "Waiting " + juce::String(delay / 1000.0, 1) + "s before retry...");
+        Thread::sleep(delay);
+    }
+}
+
+bool HttpStemProcessor::isServiceAvailableWithRetry()
+{
+    for (int attempt = 0; attempt <= maxRetries; ++attempt)
+    {
+        if (threadShouldExit())
+            return false;
+            
+        if (attempt > 0)
+        {
+            updateProgress(0.05 + (attempt * 0.02), "Retrying service check... (attempt " + juce::String(attempt + 1) + "/" + juce::String(maxRetries + 1) + ")");
+        }
+        
+        if (isServiceAvailable())
+            return true;
+        
+        // If this was the last attempt, don't wait
+        if (attempt < maxRetries)
+        {
+            waitWithBackoff(attempt);
+        }
+    }
+    
+    return false;
+}
+
+bool HttpStemProcessor::sendSeparationRequestWithRetry()
+{
+    for (int attempt = 0; attempt <= maxRetries; ++attempt)
+    {
+        if (threadShouldExit())
+            return false;
+            
+        if (attempt > 0)
+        {
+            updateProgress(0.15 + (attempt * 0.02), "Retrying separation request... (attempt " + juce::String(attempt + 1) + "/" + juce::String(maxRetries + 1) + ")");
+        }
+        
+        if (sendSeparationRequest())
+            return true;
+        
+        // If this was the last attempt, don't wait
+        if (attempt < maxRetries)
+        {
+            waitWithBackoff(attempt);
+        }
+    }
+    
+    return false;
 }
 
 void HttpStemProcessor::updateProgress(double progress, const juce::String& message)
