@@ -170,7 +170,7 @@ package-lock.json
 .env.*.local
 
 # # Private configuration (keep config.h.sample but ignore config.h)
-# Source/Config/config.h
+Source/Config/config.h
 
 # CMake
 CMakeFiles/
