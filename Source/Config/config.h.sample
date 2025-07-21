@@ -1,0 +1,16 @@
+#pragma once
+
+/**
+ * LucidKaraoke Configuration
+ * 
+ * This file contains compile-time configuration for the LucidKaraoke plugin.
+ * 
+ * SETUP INSTRUCTIONS:
+ * 1. Copy this file to config.h in the same directory
+ * 2. Update the SERVICE_URL with your actual cloud service endpoint
+ * 3. Modify other settings as needed for your environment
+ */
+
+// Cloud Processing Service Configuration
+// Uncomment and set your service URL to skip the startup prompt:
+// #define SERVICE_URL "http://localhost:8000"

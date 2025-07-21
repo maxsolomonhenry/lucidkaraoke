@@ -29,6 +29,9 @@ juce_add_plugin(lucidkaraoke
 
 juce_generate_juce_header(lucidkaraoke)
 
+# Include Config directory for private configuration headers
+target_include_directories(lucidkaraoke PRIVATE Source)
+
 target_sources(lucidkaraoke
     PRIVATE
         Source/PluginEditor.cpp

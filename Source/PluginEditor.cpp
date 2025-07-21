@@ -8,6 +8,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Config/config.h"
 
 //==============================================================================
 LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (LucidkaraokeAudioProcessor& p)
@@ -59,13 +60,20 @@ LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (Lucidkaraoke
     // Listen for recording state changes from the processor
     audioProcessor.addChangeListener(this);
 
+#ifdef SERVICE_URL
+    // SERVICE_URL is defined in config.h, use it directly
+    serviceUrl = SERVICE_URL;
+    loadButton->setEnabled(true);
+#else
+    // SERVICE_URL not defined, prompt user for configuration
     promptForServiceUrl();
+#endif
 }
 
 void LucidkaraokeAudioProcessorEditor::promptForServiceUrl()
 {
     auto* w = new juce::AlertWindow ("Configure Cloud Processing Service",
-                         "Please enter the URL for the cloud processing service. This is used for features like stem separation and other heavy processing tasks.",
+                         "SERVICE_URL is not defined in your build configuration. Please enter the URL for the cloud processing service.\n\nTo avoid this prompt in the future:\n1. Copy Source/Config/config.h.sample to Source/Config/config.h\n2. Set your SERVICE_URL in config.h\n3. Rebuild the application",
                          juce::AlertWindow::NoIcon);
 
     w->addTextEditor ("serviceUrl", "http://localhost:8000", "Service URL:");
