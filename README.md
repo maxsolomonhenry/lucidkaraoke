@@ -110,6 +110,25 @@ LucidKaraoke makes this possible by combining advanced AI with an intuitive inte
 - Docker and Docker Compose (for stem separation service)
 - JUCE framework (located at `../JUCE` relative to project root)
 
+## Setup
+
+### Configuration Setup (Required)
+
+Before building, you must set up the configuration file:
+
+```bash
+# Copy the sample configuration
+cp Source/Config/config.h.sample Source/Config/config.h
+
+# Edit config.h and uncomment/set your service URL:
+# #define SERVICE_URL "https://your-cloud-service-url.com"
+```
+
+**Important**: 
+- If you skip this step, the application will prompt you for the service URL at startup
+- The `config.h` file is gitignored to keep your service URL private
+- Other developers should repeat this setup process with their own service URLs
+
 ## Building
 
 ```bash
