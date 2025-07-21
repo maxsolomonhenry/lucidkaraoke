@@ -99,7 +99,7 @@ LucidKaraoke makes this possible by combining advanced AI with an intuitive inte
 ## Technical Stack
 
 - **Audio Framework**: JUCE (cross-platform C++)
-- **Stem Separation**: DeMucs (Python-based AI)
+- **Stem Separation**: DeMucs (containerized service)
 - **Voice Conversion**: Custom AI pipeline (in development)
 - **Build System**: CMake
 
@@ -107,10 +107,7 @@ LucidKaraoke makes this possible by combining advanced AI with an intuitive inte
 
 - CMake 3.22+
 - C++17 compiler
-- Python 3.8+ with DeMucs (run setup script):
-  ```bash
-  ./setup_demucs_env.sh
-  ```
+- Docker and Docker Compose (for stem separation service)
 - JUCE framework (located at `../JUCE` relative to project root)
 
 ## Building

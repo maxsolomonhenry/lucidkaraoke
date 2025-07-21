@@ -14,17 +14,7 @@ This project uses CMake with JUCE framework:
 - CMake 3.22+
 - JUCE framework (located at `../JUCE` relative to project root)
 - C++17 compiler
-- Python 3.8+ and FFmpeg for stem separation:
-  ```bash
-  # Run the setup script to create virtual environment with DeMucs
-  ./setup_demucs_env.sh
-  
-  # Or install manually:
-  brew install ffmpeg  # macOS (required)
-  python3 -m venv demucs_env
-  source demucs_env/bin/activate
-  pip install demucs torch librosa soundfile
-  ```
+- Docker and Docker Compose (for stem separation service)
 
 ### Build Commands
 ```bash
@@ -90,7 +80,7 @@ The AudioProcessor maintains three states: Stopped, Playing, Paused. State chang
   sed -i '' 's/\r$//' script_name.sh
   ```
   **IMPORTANT**: All shell scripts must be created with LF line endings from the start. Use your editor's line ending settings or run the sed command immediately after creating any .sh file.
-- **Python Environment**: Code uses relative paths to find `demucs_env/` virtual environment, checking both executable-relative (`../demucs_env/`) and working directory-relative (`demucs_env/`) locations
+- **Docker Service**: Stem separation is handled by containerized DeMucs service via HTTP API
 
 ## Docker Integration
 
