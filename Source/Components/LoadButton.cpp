@@ -13,7 +13,7 @@ LoadButton::~LoadButton()
 void LoadButton::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds();
-    auto cornerSize = 8.0f;
+    auto cornerSize = 6.0f;
     
     juce::Colour buttonColor = juce::Colour(0xff2d2d2d);
     
@@ -24,15 +24,12 @@ void LoadButton::paint(juce::Graphics& g)
     g.fillRoundedRectangle(bounds.toFloat(), cornerSize);
     
     g.setColour(juce::Colour(0xff4dabf7));
-    g.drawRoundedRectangle(bounds.toFloat(), cornerSize, 2.0f);
+    g.drawRoundedRectangle(bounds.toFloat(), cornerSize, 1.5f);
     
-    drawLoadIcon(g, bounds);
-    
+    // Simpler text-only design for compact header button
     g.setColour(juce::Colour(0xffe9ecef));
-    g.setFont(juce::FontOptions(14.0f, juce::Font::bold));
-    
-    auto textBounds = bounds.reduced(0, bounds.getHeight() / 3);
-    g.drawText("LOAD AUDIO", textBounds, juce::Justification::centred);
+    g.setFont(juce::FontOptions(12.0f, juce::Font::bold));
+    g.drawText("LOAD", bounds, juce::Justification::centred);
 }
 
 void LoadButton::resized()

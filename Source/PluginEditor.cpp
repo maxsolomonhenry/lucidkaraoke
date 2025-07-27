@@ -110,9 +110,13 @@ void LucidkaraokeAudioProcessorEditor::paint (juce::Graphics& g)
 {
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
     
+    // Draw title in header area - left aligned with bigger font
+    auto headerBounds = getLocalBounds().removeFromTop(60);
+    auto titleBounds = headerBounds.reduced(20, 0).removeFromLeft(headerBounds.getWidth() - 120); // Leave space for load button
+    
     g.setColour(juce::Colour(0xff4dabf7));
-    g.setFont(juce::FontOptions(24.0f, juce::Font::bold));
-    g.drawText("LucidKaraoke", getLocalBounds().removeFromTop(60), juce::Justification::centred);
+    g.setFont(juce::Font("Futura", 80.0f, juce::Font::plain));
+    g.drawText("LUCIDKARAOKE", titleBounds, juce::Justification::centredLeft);
 }
 
 void LucidkaraokeAudioProcessorEditor::resized()
@@ -120,13 +124,17 @@ void LucidkaraokeAudioProcessorEditor::resized()
     auto bounds = getLocalBounds();
     
     auto headerHeight = 60;
-    bounds.removeFromTop(headerHeight);
+    auto headerBounds = bounds.removeFromTop(headerHeight);
+    
+    // Position LoadButton in header on the right side
+    auto loadButtonWidth = 100;
+    auto loadButtonHeight = 40;
+    auto loadButtonBounds = headerBounds.removeFromRight(loadButtonWidth + 20).reduced(20, 0);
+    loadButtonBounds = loadButtonBounds.withHeight(loadButtonHeight).withCentre(loadButtonBounds.getCentre());
+    loadButton->setBounds(loadButtonBounds);
     
     auto margin = 20;
     bounds.reduce(margin, margin);
-    
-    auto loadButtonHeight = 60;
-    loadButton->setBounds(bounds.removeFromTop(loadButtonHeight));
     
     bounds.removeFromTop(margin / 2);
     
