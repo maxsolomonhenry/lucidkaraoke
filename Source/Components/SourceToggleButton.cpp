@@ -34,8 +34,9 @@ void SourceToggleButton::paintButton(juce::Graphics& g, bool shouldDrawButtonAsH
     }
     else
     {
-        trackColour = juce::Colour(0xff666666); // Gray when off (original mode)
+        trackColour = juce::Colour(0xff666666); // Gray when off (original mode)  
     }
+    
     
     if (shouldDrawButtonAsHighlighted && isEnabled())
         trackColour = trackColour.brighter(0.1f);
@@ -46,13 +47,6 @@ void SourceToggleButton::paintButton(juce::Graphics& g, bool shouldDrawButtonAsH
     // Border
     g.setColour(juce::Colour(0xff404040));
     g.drawRoundedRectangle(bounds, cornerRadius, 1.0f);
-    
-    // "Replace" label
-    g.setColour(isEnabled() ? juce::Colours::white : juce::Colour(0xff666666));
-    g.setFont(juce::FontOptions(12.0f, juce::Font::bold));
-    
-    auto textBounds = bounds.reduced(4.0f);
-    g.drawText("Replace", textBounds, juce::Justification::centred, true);
 }
 
 void SourceToggleButton::resized()
