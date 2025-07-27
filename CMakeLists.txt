@@ -61,12 +61,23 @@ target_sources(lucidkaraoke
         Source/Audio/RVCProcessor.cpp
         Source/Audio/RVCProcessor.h)
 
-target_compile_definitions(lucidkaraoke
-    PUBLIC
-        JUCE_WEB_BROWSER=0
-        JUCE_USE_CURL=0
-        JUCE_VST3_CAN_REPLACE_VST2=0
-        JUCE_STRICT_REFCOUNTEDPOINTER=1)
+# Debug/Release specific compile definitions
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(lucidkaraoke
+        PUBLIC
+            JUCE_WEB_BROWSER=0
+            JUCE_USE_CURL=0
+            JUCE_VST3_CAN_REPLACE_VST2=0
+            JUCE_STRICT_REFCOUNTEDPOINTER=1
+            DEBUG=1)
+else()
+    target_compile_definitions(lucidkaraoke
+        PUBLIC
+            JUCE_WEB_BROWSER=0
+            JUCE_USE_CURL=0
+            JUCE_VST3_CAN_REPLACE_VST2=0
+            JUCE_STRICT_REFCOUNTEDPOINTER=1)
+endif()
 
 target_link_libraries(lucidkaraoke
     PRIVATE

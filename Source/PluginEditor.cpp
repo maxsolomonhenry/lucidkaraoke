@@ -118,28 +118,6 @@ void LucidkaraokeAudioProcessorEditor::paint (juce::Graphics& g)
     g.setFont(juce::Font("Futura", 80.0f, juce::Font::plain));
     g.drawText("LUCIDKARAOKE", titleBounds, juce::Justification::centredLeft);
     
-    // Draw "Replace" text below the toggle switch
-    auto toggleBounds = sourceToggleButton->getBounds();
-    auto textY = toggleBounds.getBottom() + 3;
-    auto textBounds = juce::Rectangle<int>(toggleBounds.getX() - 5, textY, toggleBounds.getWidth() + 10, 12);
-    
-    // Debug: Check if text is within bounds
-    auto componentBounds = getLocalBounds();
-    
-    // Force text to be above the toggle if it would go outside bounds
-    if (textBounds.getBottom() > componentBounds.getBottom() - 5)
-    {
-        textY = toggleBounds.getY() - 15;
-        textBounds = juce::Rectangle<int>(toggleBounds.getX() - 5, textY, toggleBounds.getWidth() + 10, 12);
-    }
-    
-    // Debug rectangle to see where text should appear
-    g.setColour(juce::Colours::red.withAlpha(0.5f));
-    g.fillRect(textBounds);
-    
-    g.setColour(sourceToggleButton->isEnabled() ? juce::Colours::white : juce::Colour(0xff666666));
-    g.setFont(juce::FontOptions(9.0f, juce::Font::bold));
-    g.drawText("Replace", textBounds, juce::Justification::centred);
 }
 
 void LucidkaraokeAudioProcessorEditor::resized()
@@ -177,18 +155,12 @@ void LucidkaraokeAudioProcessorEditor::resized()
     
     transportControls->setBounds(transportBounds);
     
-    // Create a region in the lower right for toggle + text, positioned higher to leave room for text
-    auto toggleRegionWidth = 60;
-    auto toggleRegionHeight = 45; // Taller to accommodate text below
+    // Position toggle in the lower right of the transport area (with space for text below)
+    auto toggleWidth = 100;  // Wider to accommodate text that extends beyond switch
+    auto toggleHeight = 50;  // Taller to include text below
     auto rightMargin = 20;
-    auto toggleRegionX = getWidth() - toggleRegionWidth - rightMargin;
-    auto toggleRegionY = transportBounds.getCentreY() - toggleRegionHeight / 2 - 10; // Move up 10px to make room for text
-    
-    // Position toggle in the top part of the region
-    auto toggleWidth = 50;
-    auto toggleHeight = 25;
-    auto toggleX = toggleRegionX + (toggleRegionWidth - toggleWidth) / 2;
-    auto toggleY = toggleRegionY + 5; // 5px from top of region
+    auto toggleX = getWidth() - toggleWidth - rightMargin;
+    auto toggleY = transportBounds.getCentreY() - toggleHeight / 2;
     sourceToggleButton->setBounds(toggleX, toggleY, toggleWidth, toggleHeight);
 }
 

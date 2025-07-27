@@ -18,9 +18,14 @@ This project uses CMake with JUCE framework:
 
 ### Build Commands
 ```bash
-# Configure and build
+# Configure and build (Release - default)
 mkdir build && cd build
 cmake ..
+cmake --build .
+
+# Configure and build (Debug - enables DBG macro and debugging features)
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Debug ..
 cmake --build .
 
 # Build specific targets
@@ -28,6 +33,12 @@ cmake --build . --target lucidkaraoke_Standalone    # Standalone application
 cmake --build . --target lucidkaraoke_VST3          # VST3 plugin
 cmake --build . --target lucidkaraoke_AU            # Audio Unit plugin
 ```
+
+### Debug Build Features
+When building with `CMAKE_BUILD_TYPE=Debug`, the following JUCE debugging features are enabled:
+- `JUCE_ENABLE_REPAINT_DEBUGGING=1`: Enables the DBG macro for debug output
+- `JUCE_LOG_ASSERTIONS=1`: Enables assertion logging
+- `JUCE_CHECK_MEMORY_LEAKS=1`: Enables memory leak detection
 
 ### Build Output
 - Standalone: `build/lucidkaraoke_artefacts/Standalone/LucidKaraoke.app`

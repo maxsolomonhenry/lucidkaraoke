@@ -19,7 +19,16 @@ SourceToggleButton::~SourceToggleButton()
 
 void SourceToggleButton::paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
 {
-    auto bounds = getLocalBounds().toFloat();
+    // Draw the actual switch in the center-top of the component
+    auto componentBounds = getLocalBounds().toFloat();
+    auto switchWidth = 50.0f;
+    auto switchHeight = 25.0f;
+    auto bounds = juce::Rectangle<float>(
+        (componentBounds.getWidth() - switchWidth) / 2,  // Center horizontally
+        0,  // Top of component
+        switchWidth,
+        switchHeight
+    );
     auto cornerRadius = bounds.getHeight() * 0.5f;
     
     // Background track
@@ -47,6 +56,22 @@ void SourceToggleButton::paintButton(juce::Graphics& g, bool shouldDrawButtonAsH
     // Border
     g.setColour(juce::Colour(0xff404040));
     g.drawRoundedRectangle(bounds, cornerRadius, 1.0f);
+    
+    // Draw "REPLACE" text below the switch, within component bounds
+    auto textY = bounds.getBottom() + 5;
+    auto textBounds = juce::Rectangle<float>(0, textY, componentBounds.getWidth(), 20);
+    
+    DBG("Switch bounds: " << bounds.toString());
+    DBG("Text bounds: " << textBounds.toString());
+    DBG("Component bounds: " << componentBounds.toString());
+    
+    // Debug: Draw red bounding box around text area
+    g.setColour(juce::Colours::red);
+    g.drawRect(textBounds, 2.0f);
+    
+    g.setColour(juce::Colours::yellow);  // Make text bright yellow to see it
+    g.setFont(juce::FontOptions(14.0f, juce::Font::bold));  // Make it bigger
+    g.drawText("REPLACE", textBounds, juce::Justification::centred);
 }
 
 void SourceToggleButton::resized()
@@ -109,12 +134,18 @@ void SourceToggleButton::timerCallback()
 
 void SourceToggleButton::updateSwitchPosition()
 {
-    auto bounds = getLocalBounds();
-    auto thumbSize = bounds.getHeight() - 4; // Leave 2px margin on each side
-    auto trackWidth = bounds.getWidth() - thumbSize - 4; // Available travel distance
+    // Use the same switch bounds as in paintButton
+    auto componentBounds = getLocalBounds();
+    auto switchWidth = 50;
+    auto switchHeight = 25;
+    auto switchX = (componentBounds.getWidth() - switchWidth) / 2;
+    auto switchY = 0;
     
-    auto thumbX = 2 + (int)(trackWidth * switchPosition);
-    auto thumbY = 2;
+    auto thumbSize = switchHeight - 4; // Leave 2px margin on each side
+    auto trackWidth = switchWidth - thumbSize - 4; // Available travel distance
+    
+    auto thumbX = switchX + 2 + (int)(trackWidth * switchPosition);
+    auto thumbY = switchY + 2;
     
     switchThumb.setBounds(thumbX, thumbY, thumbSize, thumbSize);
 }
