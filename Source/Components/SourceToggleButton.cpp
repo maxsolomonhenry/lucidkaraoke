@@ -1,152 +1,149 @@
 #include "SourceToggleButton.h"
 
 SourceToggleButton::SourceToggleButton()
-    : isShowingMixed(false),
-      isButtonEnabled(false),
-      isHovered(false)
+    : juce::Button("ReplaceToggle"),
+      switchPosition(0.0f),
+      targetPosition(0.0f),
+      isAnimating(false)
 {
+    setClickingTogglesState(true);
+    addAndMakeVisible(switchThumb);
+    switchThumb.setWantsKeyboardFocus(false);
+    switchThumb.setInterceptsMouseClicks(false, false);
 }
 
 SourceToggleButton::~SourceToggleButton()
 {
+    stopTimer();
 }
 
-void SourceToggleButton::paint(juce::Graphics& g)
+void SourceToggleButton::paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
 {
     auto bounds = getLocalBounds().toFloat();
+    auto cornerRadius = bounds.getHeight() * 0.5f;
     
-    // Background
-    auto bgColour = getButtonColour();
-    if (isHovered && isButtonEnabled)
+    // Background track
+    juce::Colour trackColour;
+    if (!isEnabled())
     {
-        bgColour = bgColour.brighter(0.1f);
+        trackColour = juce::Colour(0xff2a2a2a);
+    }
+    else if (getToggleState())
+    {
+        trackColour = juce::Colour(0xff51cf66); // Green when on (replace mode)
+    }
+    else
+    {
+        trackColour = juce::Colour(0xff666666); // Gray when off (original mode)
     }
     
-    g.setColour(bgColour);
-    g.fillRoundedRectangle(bounds, 4.0f);
+    if (shouldDrawButtonAsHighlighted && isEnabled())
+        trackColour = trackColour.brighter(0.1f);
+    
+    g.setColour(trackColour);
+    g.fillRoundedRectangle(bounds, cornerRadius);
     
     // Border
     g.setColour(juce::Colour(0xff404040));
-    g.drawRoundedRectangle(bounds, 4.0f, 1.0f);
+    g.drawRoundedRectangle(bounds, cornerRadius, 1.0f);
     
-    // Draw toggle icon
-    drawToggleIcon(g, bounds);
+    // "Replace" label
+    g.setColour(isEnabled() ? juce::Colours::white : juce::Colour(0xff666666));
+    g.setFont(juce::FontOptions(12.0f, juce::Font::bold));
     
-    // Draw text
-    g.setColour(getTextColour());
-    g.setFont(12.0f);
-    
-    juce::String text = isShowingMixed ? "Mixed" : "Original";
-    g.drawText(text, bounds.withHeight(bounds.getHeight() * 0.3f).withY(bounds.getBottom() - bounds.getHeight() * 0.3f), 
-               juce::Justification::centred, true);
+    auto textBounds = bounds.reduced(4.0f);
+    g.drawText("Replace", textBounds, juce::Justification::centred, true);
 }
 
 void SourceToggleButton::resized()
 {
-    // Nothing specific to resize
+    updateSwitchPosition();
 }
 
-void SourceToggleButton::mouseDown(const juce::MouseEvent& event)
+void SourceToggleButton::clicked()
 {
-    juce::ignoreUnused(event);
+    // Toggle the state
+    juce::Button::setToggleState(!getToggleState(), juce::dontSendNotification);
     
-    if (!isButtonEnabled)
-        return;
-        
-    setToggleState(!isShowingMixed);
-    
-    if (onToggleStateChanged)
-        onToggleStateChanged(isShowingMixed);
-}
-
-void SourceToggleButton::mouseEnter(const juce::MouseEvent& event)
-{
-    juce::ignoreUnused(event);
-    
-    if (isButtonEnabled)
+    // Start animation to new position
+    targetPosition = getToggleState() ? 1.0f : 0.0f;
+    if (!isAnimating)
     {
-        isHovered = true;
-        repaint();
+        isAnimating = true;
+        startTimer(16); // ~60fps
     }
-}
-
-void SourceToggleButton::mouseExit(const juce::MouseEvent& event)
-{
-    juce::ignoreUnused(event);
     
-    isHovered = false;
-    repaint();
+    // Notify callback
+    if (onToggleStateChanged)
+        onToggleStateChanged(getToggleState());
 }
 
 void SourceToggleButton::setToggleState(bool showingMixed)
 {
-    if (isShowingMixed != showingMixed)
-    {
-        isShowingMixed = showingMixed;
-        repaint();
-    }
+    juce::Button::setToggleState(showingMixed, juce::dontSendNotification);
+    targetPosition = getToggleState() ? 1.0f : 0.0f;
+    switchPosition = targetPosition; // Immediate positioning when set programmatically
+    updateSwitchPosition();
 }
 
 void SourceToggleButton::setEnabled(bool enabled)
 {
-    if (isButtonEnabled != enabled)
-    {
-        isButtonEnabled = enabled;
-        repaint();
-    }
+    juce::Button::setEnabled(enabled);
+    switchThumb.setEnabled(enabled);
+    repaint();
 }
 
-void SourceToggleButton::drawToggleIcon(juce::Graphics& g, juce::Rectangle<float> bounds)
+void SourceToggleButton::timerCallback()
 {
-    // Icon area (top 70% of button)
-    auto iconBounds = bounds.withHeight(bounds.getHeight() * 0.7f);
-    auto iconColour = getTextColour();
+    // Smooth animation towards target position
+    float speed = 0.15f;
+    float diff = targetPosition - switchPosition;
     
-    g.setColour(iconColour);
-    
-    if (isShowingMixed)
+    if (std::abs(diff) < 0.01f)
     {
-        // Draw mixed icon (two overlapping waveforms)
-        auto wave1 = iconBounds.reduced(8.0f);
-        auto wave2 = wave1.translated(4.0f, 2.0f);
-        
-        // First waveform (blue-ish)
-        g.setColour(juce::Colour(0xff4dabf7).withAlpha(0.7f));
-        g.drawRect(wave1.withHeight(6.0f).withCentre(wave1.getCentre()), 1.0f);
-        
-        // Second waveform (green-ish, overlapping)
-        g.setColour(juce::Colour(0xff51cf66).withAlpha(0.9f));
-        g.drawRect(wave2.withHeight(6.0f).withCentre(wave2.getCentre()), 1.0f);
+        switchPosition = targetPosition;
+        isAnimating = false;
+        stopTimer();
     }
     else
     {
-        // Draw original icon (single waveform)
-        auto waveform = iconBounds.reduced(8.0f);
-        g.setColour(juce::Colour(0xff4dabf7));
-        g.drawRect(waveform.withHeight(6.0f).withCentre(waveform.getCentre()), 1.0f);
-        
-        // Add some waveform details
-        auto center = waveform.getCentre();
-        g.drawLine(center.x - 6.0f, center.y - 2.0f, center.x - 2.0f, center.y + 2.0f, 1.0f);
-        g.drawLine(center.x + 2.0f, center.y + 2.0f, center.x + 6.0f, center.y - 2.0f, 1.0f);
+        switchPosition += diff * speed;
     }
+    
+    updateSwitchPosition();
 }
 
-juce::Colour SourceToggleButton::getButtonColour() const
+void SourceToggleButton::updateSwitchPosition()
 {
-    if (!isButtonEnabled)
-        return juce::Colour(0xff2a2a2a);
+    auto bounds = getLocalBounds();
+    auto thumbSize = bounds.getHeight() - 4; // Leave 2px margin on each side
+    auto trackWidth = bounds.getWidth() - thumbSize - 4; // Available travel distance
     
-    if (isShowingMixed)
-        return juce::Colour(0xff51cf66).withAlpha(0.3f); // Green tint for mixed
-    else
-        return juce::Colour(0xff4dabf7).withAlpha(0.3f); // Blue tint for original
+    auto thumbX = 2 + (int)(trackWidth * switchPosition);
+    auto thumbY = 2;
+    
+    switchThumb.setBounds(thumbX, thumbY, thumbSize, thumbSize);
 }
 
-juce::Colour SourceToggleButton::getTextColour() const
+void SourceToggleButton::SwitchThumb::paint(juce::Graphics& g)
 {
-    if (!isButtonEnabled)
-        return juce::Colour(0xff666666);
+    auto bounds = getLocalBounds().toFloat();
     
-    return juce::Colours::white;
+    // Drop shadow
+    g.setColour(juce::Colours::black.withAlpha(0.2f));
+    g.fillEllipse(bounds.translated(1.0f, 1.0f));
+    
+    // Main thumb
+    juce::ColourGradient gradient(
+        juce::Colours::white, bounds.getCentreX(), bounds.getY(),
+        juce::Colour(0xfff0f0f0), bounds.getCentreX(), bounds.getBottom(),
+        false
+    );
+    
+    g.setGradientFill(gradient);
+    g.fillEllipse(bounds);
+    
+    // Border
+    g.setColour(juce::Colour(0xffcccccc));
+    g.drawEllipse(bounds, 1.0f);
 }

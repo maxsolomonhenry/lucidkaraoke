@@ -150,19 +150,17 @@ void LucidkaraokeAudioProcessorEditor::resized()
     
     bounds.removeFromBottom(margin);
     
-    // Add space for source toggle button above transport controls
-    auto toggleHeight = 50;
-    auto toggleBounds = bounds.removeFromBottom(toggleHeight);
-    bounds.removeFromBottom(margin / 2);
-    
     waveformDisplay->setBounds(bounds);
     
-    // Position the source toggle button (center it horizontally)
-    auto toggleWidth = 100;
-    auto centeredToggleBounds = toggleBounds.withWidth(toggleWidth).withCentre(toggleBounds.getCentre());
-    sourceToggleButton->setBounds(centeredToggleBounds);
-    
     transportControls->setBounds(transportBounds);
+    
+    // Position the source toggle button in the absolute lower right corner
+    auto toggleWidth = 50; // 2x smaller
+    auto toggleHeight = 25; // 2x smaller  
+    auto rightMargin = 20;
+    auto toggleX = getWidth() - toggleWidth - rightMargin;
+    auto toggleY = transportBounds.getCentreY() - toggleHeight / 2;
+    sourceToggleButton->setBounds(toggleX, toggleY, toggleWidth, toggleHeight);
 }
 
 void LucidkaraokeAudioProcessorEditor::timerCallback()

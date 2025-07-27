@@ -2,34 +2,38 @@
 
 #include <JuceHeader.h>
 
-class SourceToggleButton : public juce::Component
+class SourceToggleButton : public juce::Button, private juce::Timer
 {
 public:
     SourceToggleButton();
     ~SourceToggleButton() override;
     
-    void paint(juce::Graphics& g) override;
+    void paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override;
     void resized() override;
-    void mouseDown(const juce::MouseEvent& event) override;
-    void mouseEnter(const juce::MouseEvent& event) override;
-    void mouseExit(const juce::MouseEvent& event) override;
+    void clicked() override;
     
     void setToggleState(bool showingMixed);
-    bool getToggleState() const { return isShowingMixed; }
+    bool getToggleState() const { return juce::Button::getToggleState(); }
     
     void setEnabled(bool enabled);
-    bool isEnabled() const { return isButtonEnabled; }
     
     std::function<void(bool)> onToggleStateChanged;
     
 private:
-    bool isShowingMixed;
-    bool isButtonEnabled;
-    bool isHovered;
+    void timerCallback() override;
+    void updateSwitchPosition();
     
-    void drawToggleIcon(juce::Graphics& g, juce::Rectangle<float> bounds);
-    juce::Colour getButtonColour() const;
-    juce::Colour getTextColour() const;
+    float switchPosition; // 0.0 = left (original), 1.0 = right (replace)
+    float targetPosition;
+    bool isAnimating;
+    
+    class SwitchThumb : public juce::Component
+    {
+    public:
+        void paint(juce::Graphics& g) override;
+    };
+    
+    SwitchThumb switchThumb;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SourceToggleButton)
 };
