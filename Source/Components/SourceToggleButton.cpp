@@ -57,20 +57,17 @@ void SourceToggleButton::paintButton(juce::Graphics& g, bool shouldDrawButtonAsH
     g.setColour(juce::Colour(0xff404040));
     g.drawRoundedRectangle(bounds, cornerRadius, 1.0f);
     
-    // Draw "REPLACE" text below the switch, within component bounds
+    // Draw "REPLACE" text below the switch
     auto textY = bounds.getBottom() + 5;
     auto textBounds = juce::Rectangle<float>(0, textY, componentBounds.getWidth(), 20);
     
-    DBG("Switch bounds: " << bounds.toString());
-    DBG("Text bounds: " << textBounds.toString());
-    DBG("Component bounds: " << componentBounds.toString());
+    // Text color depends on enabled state
+    juce::Colour textColour = isEnabled() ? 
+        juce::Colours::white.withAlpha(0.8f) :  // Normal state
+        juce::Colours::white.withAlpha(0.3f);   // Disabled state (grayed out)
     
-    // Debug: Draw red bounding box around text area
-    g.setColour(juce::Colours::red);
-    g.drawRect(textBounds, 2.0f);
-    
-    g.setColour(juce::Colours::yellow);  // Make text bright yellow to see it
-    g.setFont(juce::FontOptions(14.0f, juce::Font::bold));  // Make it bigger
+    g.setColour(textColour);
+    g.setFont(juce::FontOptions(10.0f, juce::Font::plain));
     g.drawText("REPLACE", textBounds, juce::Justification::centred);
 }
 
