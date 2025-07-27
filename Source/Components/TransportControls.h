@@ -29,6 +29,11 @@ private:
     std::unique_ptr<juce::TextButton> stopButton;
     std::unique_ptr<RecordButton> recordButton;
     
+    std::unique_ptr<juce::Drawable> playIcon;
+    std::unique_ptr<juce::Drawable> pauseIcon;
+    std::unique_ptr<juce::Drawable> stopIcon;
+    
+    void loadSVGIcons();
     void drawPlayIcon(juce::Graphics& g, juce::Rectangle<int> bounds);
     void drawPauseIcon(juce::Graphics& g, juce::Rectangle<int> bounds);
     void drawStopIcon(juce::Graphics& g, juce::Rectangle<int> bounds);

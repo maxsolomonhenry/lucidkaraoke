@@ -24,9 +24,12 @@ void StemProgressBar::paint(juce::Graphics& g)
     auto textHeight = 16.0f;
     auto progressAreaBounds = originalBounds.withHeight(originalBounds.getHeight() - textHeight);
     
-    // Make the bar thinner and centered in the progress area
+    // Make the bar thinner and left-justified, leaving space for LED on right
     auto barHeight = progressAreaBounds.getHeight() * 0.6f;
-    auto barBounds = progressAreaBounds.withHeight(barHeight).withY(progressAreaBounds.getCentreY() - barHeight * 0.5f);
+    auto ledSpace = barHeight + 20.0f; // Space for LED plus some margin
+    auto barBounds = progressAreaBounds.withHeight(barHeight)
+                                      .withY(progressAreaBounds.getCentreY() - barHeight * 0.5f)
+                                      .withTrimmedRight(ledSpace);
 
     auto height = barBounds.getHeight();
     auto width = barBounds.getWidth();
@@ -99,6 +102,17 @@ void StemProgressBar::paint(juce::Graphics& g)
     // Subtle border for the whole bar
     g.setColour(juce::Colour(0xff404040));
     g.drawRoundedRectangle(barBounds, height * 0.5f, 1.0f);
+    
+    // Draw 3D LED indicator in the gap to the right of the progress bar
+    auto ledSize = barHeight * 0.8f;
+    auto ledBounds = juce::Rectangle<float>(
+        barBounds.getRight() + 10.0f,
+        progressAreaBounds.getCentreY() - ledSize * 0.5f,
+        ledSize,
+        ledSize
+    );
+    
+    drawLEDIndicator(g, ledBounds);
     
     // Draw status text below the bar
     if (statusText.isNotEmpty())
@@ -189,4 +203,72 @@ void StemProgressBar::updateBreathing()
     // Keep phase in reasonable range
     if (breathingPhase > 2.0f * 3.14159f)
         breathingPhase -= 2.0f * 3.14159f;
+}
+
+void StemProgressBar::drawLEDIndicator(juce::Graphics& g, juce::Rectangle<float> bounds)
+{
+    // Create 3D LED bulb effect
+    auto center = bounds.getCentre();
+    auto radius = bounds.getWidth() * 0.5f;
+    
+    if (isCompleted)
+    {
+        // Green LED when complete - with 3D effect and glow
+        
+        // Outer glow
+        auto glowRadius = radius * (1.2f + glowIntensity * 0.3f);
+        juce::ColourGradient glowGradient(
+            juce::Colour(0xff4caf50).withAlpha(0.3f * glowIntensity), center.x, center.y,
+            juce::Colour(0xff4caf50).withAlpha(0.0f), center.x + glowRadius, center.y + glowRadius,
+            true
+        );
+        g.setGradientFill(glowGradient);
+        g.fillEllipse(center.x - glowRadius, center.y - glowRadius, glowRadius * 2, glowRadius * 2);
+        
+        // Main LED body with gradient for 3D effect
+        juce::ColourGradient ledGradient(
+            juce::Colour(0xff81c784), center.x - radius * 0.3f, center.y - radius * 0.3f,
+            juce::Colour(0xff2e7d32), center.x + radius * 0.7f, center.y + radius * 0.7f,
+            false
+        );
+        g.setGradientFill(ledGradient);
+        g.fillEllipse(bounds);
+        
+        // Highlight for 3D shine effect
+        auto highlightBounds = bounds.reduced(radius * 0.3f).translated(-radius * 0.2f, -radius * 0.2f);
+        juce::ColourGradient highlight(
+            juce::Colour(0xffffffff).withAlpha(0.8f), center.x - radius * 0.3f, center.y - radius * 0.3f,
+            juce::Colour(0xffffffff).withAlpha(0.0f), center.x, center.y,
+            false
+        );
+        g.setGradientFill(highlight);
+        g.fillEllipse(highlightBounds);
+    }
+    else
+    {
+        // Dark/gray LED when off - still with 3D effect to show it's a physical object
+        
+        // Main LED body with subtle gradient
+        juce::ColourGradient ledGradient(
+            juce::Colour(0xff555555), center.x - radius * 0.3f, center.y - radius * 0.3f,
+            juce::Colour(0xff222222), center.x + radius * 0.7f, center.y + radius * 0.7f,
+            false
+        );
+        g.setGradientFill(ledGradient);
+        g.fillEllipse(bounds);
+        
+        // Subtle highlight to show 3D shape
+        auto highlightBounds = bounds.reduced(radius * 0.4f).translated(-radius * 0.2f, -radius * 0.2f);
+        juce::ColourGradient highlight(
+            juce::Colour(0xffffffff).withAlpha(0.2f), center.x - radius * 0.3f, center.y - radius * 0.3f,
+            juce::Colour(0xffffffff).withAlpha(0.0f), center.x, center.y,
+            false
+        );
+        g.setGradientFill(highlight);
+        g.fillEllipse(highlightBounds);
+        
+        // Dark border for definition
+        g.setColour(juce::Colour(0xff1a1a1a));
+        g.drawEllipse(bounds, 1.0f);
+    }
 }
