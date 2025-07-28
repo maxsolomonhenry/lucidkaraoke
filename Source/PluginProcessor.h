@@ -60,6 +60,8 @@ public:
     void loadFile(const juce::File& file);
     void loadMixedFile(const juce::File& file);
     void setSourceToggle(bool useMixed);
+    juce::AudioFormatReaderSource* getOriginalSource() const { return readerSource.get(); }
+    juce::AudioFormatReaderSource* getMixedSource() const { return mixedReaderSource.get(); }
     void play();
     void pause();
     void stop();

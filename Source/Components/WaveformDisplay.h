@@ -17,6 +17,7 @@ public:
     void mouseUp(const juce::MouseEvent& event) override;
     
     void loadURL(const juce::URL& url);
+    void loadFromFile(const juce::File& file);
     void setPositionRelative(double position);
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
     void timerCallback() override;

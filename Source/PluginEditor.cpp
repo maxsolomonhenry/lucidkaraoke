@@ -405,6 +405,7 @@ void LucidkaraokeAudioProcessorEditor::togglePlaybackSource(bool showMixed)
     {
         // Seamlessly switch to mixed source - no file reloading
         audioProcessor.setSourceToggle(true);
+        waveformDisplay->loadFromFile(currentMixedFile);
         waveformDisplay->setDisplayMode(WaveformDisplay::DisplayMode::MixedFile);
         currentPlaybackMode = PlaybackMode::MixedFilePlayback;
         audioProcessor.setRecordingEnabled(false);
@@ -414,6 +415,7 @@ void LucidkaraokeAudioProcessorEditor::togglePlaybackSource(bool showMixed)
     {
         // Seamlessly switch to original source - no file reloading
         audioProcessor.setSourceToggle(false);
+        waveformDisplay->loadFromFile(currentInputFile);
         waveformDisplay->setDisplayMode(WaveformDisplay::DisplayMode::Normal);
         currentPlaybackMode = PlaybackMode::Normal;
         audioProcessor.setRecordingEnabled(true);

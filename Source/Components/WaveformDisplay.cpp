@@ -99,6 +99,23 @@ void WaveformDisplay::loadURL(const juce::URL& url)
     repaint();
 }
 
+void WaveformDisplay::loadFromFile(const juce::File& file)
+{
+    if (file.exists())
+    {
+        audioThumbnail.clear();
+        audioThumbnail.setSource(new juce::FileInputSource(file));
+        fileLoaded = true;
+        // Don't reset position when switching sources - keep current playback position
+        repaint();
+    }
+    else
+    {
+        fileLoaded = false;
+        repaint();
+    }
+}
+
 void WaveformDisplay::setDisplayMode(DisplayMode mode)
 {
     displayMode = mode;
