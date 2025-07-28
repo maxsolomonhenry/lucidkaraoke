@@ -55,7 +55,7 @@ LucidkaraokeAudioProcessorEditor::LucidkaraokeAudioProcessorEditor (Lucidkaraoke
 
     startTimer(50);
 
-    setSize (800, 600);
+    setSize (600, 600);
     
     // Listen for recording state changes from the processor
     audioProcessor.addChangeListener(this);
@@ -117,7 +117,7 @@ void LucidkaraokeAudioProcessorEditor::paint (juce::Graphics& g)
     auto titleBounds = headerBounds.removeFromLeft(headerBounds.getWidth() - 120); // Leave space for load button
     
     g.setColour(juce::Colour(0xff4dabf7));
-    g.setFont(juce::Font("Futura", 80.0f, juce::Font::plain));
+    g.setFont(juce::Font("Futura", 75.0f, juce::Font::plain));
     g.drawText("LUCIDKARAOKE", titleBounds, juce::Justification::centredLeft);
     
 }

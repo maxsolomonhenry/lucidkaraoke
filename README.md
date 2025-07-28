@@ -67,6 +67,8 @@ LucidKaraoke revolutionizes karaoke by letting you sing along to *any* song and 
 
 **Update 15/07/25**: The user can load a song of their choosing, press play and sing along (headphones only for now). In a background thread, the engine will split the music source and remove the vocals, then apply the recorded take on-top of the instrumental backing. After recording and mixing, users can now toggle between the original track and their mixed version using a dedicated toggle button. The current pipeline isolates both the user voice and the input voice, meaning the infrastructure is in place to train a few-shot vocal clone engine (on the user's take), then use a voice conversion model (e.g., RVC) to convert the clean vocal stem from the original track into the timbre of the user's voice. The latter service will run in the cloud (API calls through `ngrok`) for portablity and speed.
 
+**Update 28/07/25**: Implemented live audio switching with synchronized waveform display. Users can now seamlessly toggle between original and mixed audio sources in real-time, with the waveform visualization automatically updating to match the selected audio source.
+
 ### To-do list:
 - [x] **Audio Engine**: JUCE-based cross-platform audio processing
 - [x] **File Loading**: Support for standard audio formats
@@ -74,7 +76,7 @@ LucidKaraoke revolutionizes karaoke by letting you sing along to *any* song and 
 - [x] **Transport Controls**: Play, pause, stop, and seek functionality
 - [x] **Local Stem Separation**: DeMucs integration for vocals/instrumental splitting
 - [x] **Recording and Mixing**: Automatic vocal recording during playback with mixing
-- [x] **Source Toggle**: Toggle button to switch between original and mixed files
+- [x] **Source Toggle**: Live audio switching with synchronized waveform display
 - [x] **Beyond Headphones-Only**: Implement acoustic echo canceller for sing-along with speakers.
 - [ ] **Portable Setup**: Refactor for code portability
 - [ ] **Cloud-Based Processing**: Move stem separation to cloud for faster processing
