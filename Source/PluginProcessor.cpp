@@ -21,7 +21,7 @@ LucidkaraokeAudioProcessor::LucidkaraokeAudioProcessor()
                      #endif
                        ),
 #endif
-      state(Stopped)
+      state(Stopped), usingMixedSource(false)
 {
     // Set up file logger
     auto logFile = juce::File::getSpecialLocation(juce::File::currentApplicationFile)
@@ -226,7 +226,74 @@ void LucidkaraokeAudioProcessor::loadFile(const juce::File& file)
         readerSource = std::move(newSource);
         lastFileURL = juce::URL(file);
         
+        // Reset mixed source when loading a new original file
+        mixedReaderSource.reset();
+        usingMixedSource = false;
+        
         changeState(Stopped);
+    }
+}
+
+void LucidkaraokeAudioProcessor::loadMixedFile(const juce::File& file)
+{
+    auto* reader = formatManager.createReaderFor(file);
+    
+    if (reader != nullptr)
+    {
+        mixedReaderSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
+        
+        // Don't change state - mixed file is loaded in background
+        // Toggle will be available once this is loaded
+    }
+}
+
+void LucidkaraokeAudioProcessor::setSourceToggle(bool useMixed)
+{
+    if (useMixed && mixedReaderSource != nullptr)
+    {
+        // Switch to mixed source
+        if (!usingMixedSource)
+        {
+            // Store current position and state
+            auto currentPosition = transportSource.getCurrentPosition();
+            auto currentState = state;
+            
+            // Switch source
+            transportSource.setSource(mixedReaderSource.get(), 0, nullptr, 
+                                    mixedReaderSource->getAudioFormatReader()->sampleRate);
+            
+            // Restore position and state
+            transportSource.setPosition(currentPosition);
+            if (currentState == Playing)
+            {
+                transportSource.start();
+            }
+            
+            usingMixedSource = true;
+        }
+    }
+    else if (!useMixed && readerSource != nullptr)
+    {
+        // Switch to original source
+        if (usingMixedSource)
+        {
+            // Store current position and state
+            auto currentPosition = transportSource.getCurrentPosition();
+            auto currentState = state;
+            
+            // Switch source
+            transportSource.setSource(readerSource.get(), 0, nullptr, 
+                                    readerSource->getAudioFormatReader()->sampleRate);
+            
+            // Restore position and state
+            transportSource.setPosition(currentPosition);
+            if (currentState == Playing)
+            {
+                transportSource.start();
+            }
+            
+            usingMixedSource = false;
+        }
     }
 }
 
@@ -278,9 +345,10 @@ void LucidkaraokeAudioProcessor::stop()
 
 void LucidkaraokeAudioProcessor::setPosition(double position)
 {
-    if (readerSource != nullptr)
+    auto* currentSource = usingMixedSource ? mixedReaderSource.get() : readerSource.get();
+    if (currentSource != nullptr)
     {
-        auto lengthInSeconds = readerSource->getTotalLength() / readerSource->getAudioFormatReader()->sampleRate;
+        auto lengthInSeconds = currentSource->getTotalLength() / currentSource->getAudioFormatReader()->sampleRate;
         auto timePosition = position * lengthInSeconds;
         transportSource.setPosition(timePosition);
     }
@@ -288,9 +356,10 @@ void LucidkaraokeAudioProcessor::setPosition(double position)
 
 double LucidkaraokeAudioProcessor::getPosition() const
 {
-    if (readerSource != nullptr)
+    auto* currentSource = usingMixedSource ? mixedReaderSource.get() : readerSource.get();
+    if (currentSource != nullptr)
     {
-        auto lengthInSeconds = readerSource->getTotalLength() / readerSource->getAudioFormatReader()->sampleRate;
+        auto lengthInSeconds = currentSource->getTotalLength() / currentSource->getAudioFormatReader()->sampleRate;
         if (lengthInSeconds > 0)
             return transportSource.getCurrentPosition() / lengthInSeconds;
     }
@@ -299,8 +368,9 @@ double LucidkaraokeAudioProcessor::getPosition() const
 
 double LucidkaraokeAudioProcessor::getLength() const
 {
-    if (readerSource != nullptr)
-        return readerSource->getTotalLength();
+    auto* currentSource = usingMixedSource ? mixedReaderSource.get() : readerSource.get();
+    if (currentSource != nullptr)
+        return currentSource->getTotalLength();
     return 0.0;
 }
 
@@ -316,7 +386,7 @@ bool LucidkaraokeAudioProcessor::isPaused() const
 
 bool LucidkaraokeAudioProcessor::isLoaded() const
 {
-    return readerSource != nullptr;
+    return (usingMixedSource ? mixedReaderSource != nullptr : readerSource != nullptr);
 }
 
 void LucidkaraokeAudioProcessor::changeListenerCallback(juce::ChangeBroadcaster* source)

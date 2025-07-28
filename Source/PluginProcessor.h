@@ -58,6 +58,8 @@ public:
     //==============================================================================
     // Audio file handling
     void loadFile(const juce::File& file);
+    void loadMixedFile(const juce::File& file);
+    void setSourceToggle(bool useMixed);
     void play();
     void pause();
     void stop();
@@ -107,8 +109,10 @@ private:
     //==============================================================================
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
+    std::unique_ptr<juce::AudioFormatReaderSource> mixedReaderSource;
     juce::AudioTransportSource transportSource;
     juce::MixerAudioSource mixerSource;
+    bool usingMixedSource;
     
     enum TransportState
     {

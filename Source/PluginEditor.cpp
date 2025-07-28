@@ -228,13 +228,18 @@ void LucidkaraokeAudioProcessorEditor::loadFile(const juce::File& file)
 
 void LucidkaraokeAudioProcessorEditor::loadMixedFile(const juce::File& file)
 {
-    audioProcessor.loadFile(file);
-    waveformDisplay->loadURL(juce::URL(file));
+    // Load mixed file into the secondary audio source
+    audioProcessor.loadMixedFile(file);
+    
+    // Switch to mixed source
+    audioProcessor.setSourceToggle(true);
+    audioProcessor.setRecordingEnabled(false);
+    
+    // Update waveform display mode but keep original waveform
     waveformDisplay->setDisplayMode(WaveformDisplay::DisplayMode::MixedFile);
     
     // Set to mixed file playback mode
     currentPlaybackMode = PlaybackMode::MixedFilePlayback;
-    audioProcessor.setRecordingEnabled(false);
     
     // Store mixed file and enable toggle
     currentMixedFile = file;
@@ -398,9 +403,8 @@ void LucidkaraokeAudioProcessorEditor::togglePlaybackSource(bool showMixed)
     
     if (showMixed && currentMixedFile.exists())
     {
-        // Switch to mixed file
-        audioProcessor.loadFile(currentMixedFile);
-        waveformDisplay->loadURL(juce::URL(currentMixedFile));
+        // Seamlessly switch to mixed source - no file reloading
+        audioProcessor.setSourceToggle(true);
         waveformDisplay->setDisplayMode(WaveformDisplay::DisplayMode::MixedFile);
         currentPlaybackMode = PlaybackMode::MixedFilePlayback;
         audioProcessor.setRecordingEnabled(false);
@@ -408,9 +412,8 @@ void LucidkaraokeAudioProcessorEditor::togglePlaybackSource(bool showMixed)
     }
     else if (!showMixed && currentInputFile.exists())
     {
-        // Switch to original file
-        audioProcessor.loadFile(currentInputFile);
-        waveformDisplay->loadURL(juce::URL(currentInputFile));
+        // Seamlessly switch to original source - no file reloading
+        audioProcessor.setSourceToggle(false);
         waveformDisplay->setDisplayMode(WaveformDisplay::DisplayMode::Normal);
         currentPlaybackMode = PlaybackMode::Normal;
         audioProcessor.setRecordingEnabled(true);
