@@ -77,14 +77,12 @@ LucidKaraoke revolutionizes karaoke by letting you sing along to *any* song and 
 - [x] **Local Stem Separation**: DeMucs integration for vocals/instrumental splitting
 - [x] **Recording and Mixing**: Automatic vocal recording during playback with mixing
 - [x] **Source Toggle**: Live audio switching with synchronized waveform display
-- [x] **Beyond Headphones-Only**: Implement acoustic echo canceller for sing-along with speakers.
-- [ ] **Portable Setup**: Refactor for code portability
-- [ ] **Cloud-Based Processing**: Move stem separation to cloud for faster processing
+- [ ] **Beyond Headphones-Only**: Implement acoustic echo canceller for sing-along with speakers.
+- [x] **Portable Setup**: Refactor for code portability
+- [x] **Cloud-Based Processing**: Move stem separation to cloud for faster processing
 - [ ] **Voice Conversion Pipeline**: AI model training and vocal replacement
 - [ ] **Cloud Voice Processing**: Python script integration via API calls
 - [ ] **UX Overhaul**: Streamlined workflow and improved user experience
-- [ ] **Real-time Monitoring**: Live audio feedback during recording
-- [ ] **Batch Processing**: Handle multiple songs efficiently
 - [ ] **Accumulate User Voice**: Accumulate recordings to learn more detailed cloning model of user voice
 - [ ] **Multiple Users**: Multiple user profiles, ability to load/reset cloning model. 
 
