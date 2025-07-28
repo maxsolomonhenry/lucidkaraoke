@@ -51,11 +51,17 @@ When building with `CMAKE_BUILD_TYPE=Debug`, the following JUCE debugging featur
 - **AudioProcessor** (`Source/PluginProcessor.*`): Main audio processing engine with transport controls
 - **AudioProcessorEditor** (`Source/PluginEditor.*`): Main UI container with dark theme
 - **HttpStemProcessor** (`Source/Audio/HttpStemProcessor.*`): Handles cloud-based stem separation via HTTP API with retry logic
+- **RVCProcessor** (`Source/Audio/RVCProcessor.*`): Voice conversion processor (placeholder implementation)
+- **VocalMixer** (`Source/Audio/VocalMixer.*`): Audio mixing and blending capabilities
 - **WaveformDisplay** (`Source/Components/WaveformDisplay.*`): Audio visualization with playhead and seeking
 - **TransportControls** (`Source/Components/TransportControls.*`): Play/pause/stop controls
 - **LoadButton** (`Source/Components/LoadButton.*`): File loading interface
 - **SplitButton** (`Source/Components/SplitButton.*`): Stem separation trigger
+- **RecordButton** (`Source/Components/RecordButton.*`): Audio recording interface
+- **ProgressBar** (`Source/Components/ProgressBar.*`): Progress visualization for long operations
+- **SourceToggleButton** (`Source/Components/SourceToggleButton.*`): Audio source switching controls
 - **DarkTheme** (`Source/LookAndFeel/DarkTheme.*`): Custom UI styling
+- **Config** (`Source/Config/config.h`): Configuration management and settings
 
 ### Key Design Patterns
 - JUCE component-based architecture with proper RAII
@@ -119,3 +125,6 @@ docker compose --profile gpu up -d
 # Test the service
 ./test_service.sh
 ```
+
+## Build Tips
+- You can cmake --build with the -j flag to parallelize it please

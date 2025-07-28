@@ -382,8 +382,13 @@ void LucidkaraokeAudioProcessorEditor::mixVocalsWithKaraoke(const juce::File& re
 
 void LucidkaraokeAudioProcessorEditor::togglePlaybackSource(bool showMixed)
 {
+    DBG("togglePlaybackSource called with showMixed: " << (showMixed ? "true" : "false") << ", canToggleBetweenSources: " << (canToggleBetweenSources ? "true" : "false"));
+    
     if (!canToggleBetweenSources)
+    {
+        DBG("togglePlaybackSource: Cannot toggle between sources, returning");
         return;
+    }
     
     if (showMixed && currentMixedFile.exists())
     {

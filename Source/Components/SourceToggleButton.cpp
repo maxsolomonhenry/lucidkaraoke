@@ -78,8 +78,12 @@ void SourceToggleButton::resized()
 
 void SourceToggleButton::clicked()
 {
-    // Toggle the state
-    juce::Button::setToggleState(!getToggleState(), juce::dontSendNotification);
+    DBG("SourceToggleButton clicked! Current state: " << (getToggleState() ? "true" : "false") << ", enabled: " << (isEnabled() ? "true" : "false"));
+    
+    // Let JUCE handle the toggle state since we set setClickingTogglesState(true)
+    // The state will be automatically toggled by the base class
+    
+    DBG("SourceToggleButton new state: " << (getToggleState() ? "true" : "false"));
     
     // Start animation to new position
     targetPosition = getToggleState() ? 1.0f : 0.0f;
@@ -91,11 +95,19 @@ void SourceToggleButton::clicked()
     
     // Notify callback
     if (onToggleStateChanged)
+    {
+        DBG("SourceToggleButton calling callback with state: " << (getToggleState() ? "true" : "false"));
         onToggleStateChanged(getToggleState());
+    }
+    else
+    {
+        DBG("SourceToggleButton: No callback set!");
+    }
 }
 
 void SourceToggleButton::setToggleState(bool showingMixed)
 {
+    DBG("SourceToggleButton::setToggleState called with: " << (showingMixed ? "true" : "false"));
     juce::Button::setToggleState(showingMixed, juce::dontSendNotification);
     targetPosition = getToggleState() ? 1.0f : 0.0f;
     switchPosition = targetPosition; // Immediate positioning when set programmatically
