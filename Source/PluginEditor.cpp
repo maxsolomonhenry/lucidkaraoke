@@ -112,7 +112,9 @@ void LucidkaraokeAudioProcessorEditor::paint (juce::Graphics& g)
     
     // Draw title in header area - left aligned with bigger font
     auto headerBounds = getLocalBounds().removeFromTop(60);
-    auto titleBounds = headerBounds.reduced(20, 0).removeFromLeft(headerBounds.getWidth() - 120); // Leave space for load button
+    headerBounds.removeFromTop(20); // Add 20px top margin
+    headerBounds.removeFromLeft(20); // Add 20px left margin
+    auto titleBounds = headerBounds.removeFromLeft(headerBounds.getWidth() - 120); // Leave space for load button
     
     g.setColour(juce::Colour(0xff4dabf7));
     g.setFont(juce::Font("Futura", 80.0f, juce::Font::plain));
@@ -127,11 +129,15 @@ void LucidkaraokeAudioProcessorEditor::resized()
     auto headerHeight = 60;
     auto headerBounds = bounds.removeFromTop(headerHeight);
     
-    // Position LoadButton in header on the right side
+    // Position LoadButton in header on the right side, aligned with title text center
     auto loadButtonWidth = 100;
     auto loadButtonHeight = 40;
     auto loadButtonBounds = headerBounds.removeFromRight(loadButtonWidth + 20).reduced(20, 0);
-    loadButtonBounds = loadButtonBounds.withHeight(loadButtonHeight).withCentre(loadButtonBounds.getCentre());
+    
+    // Title text starts 20px from top, so center the button with the remaining space
+    auto titleCenterY = 20 + (headerHeight - 20) / 2;
+    auto buttonY = titleCenterY - (loadButtonHeight / 2);
+    loadButtonBounds = loadButtonBounds.withHeight(loadButtonHeight).withY(buttonY);
     loadButton->setBounds(loadButtonBounds);
     
     auto margin = 20;
